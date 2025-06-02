@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Plant</title>
+</head>
+<body>
+    <h1>Edit Plant Page</h1>
+    <h2>เพิ่มพืชในระบบ (ไม่มีผลต่อการประมวลผล AI)</h2>
+    <form action=""><!--แบบฟอร์มเพิ่มข้อมูลพืชที่ไม่ส่งผลต่อ AI-->
+        <div>
+            <label for="image">แนบภาพ</label>
+            <input type="file" name="image" required>
+        </div>
+        <div>
+            <label for="name">ชื่อพืช</label>
+            <input type="text" name="name" required>
+        </div>
+        <div>
+            <label for="common name">ชื่อสามัญ</label>
+            <input type="text" name="common name" required>
+        </div>
+        <div>
+            <label for="scientific name">ชื่อทางวิทยาศาสตร์</label>
+            <input type="text" name="scientific name">
+        </div>
+        <div>
+            <label for="family">สกุล</label>
+            <input type="text" name="family">
+        </div>
+        <div>
+            <label for="medicinal benefits">สรรพคุณทางยา</label>
+            <textarea name="medicinal benefits" id=""></textarea>
+        </div>
+        <div>
+            <label for="nutritional benefits">สรรพคุณทางอาหาร</label>
+            <textarea name="medicinal benefits" id=""></textarea>
+        </div>
+        <div>
+            <label for="nutritional value">คุณค่าทางโภชนาการ</label>
+                <input type="checkbox" name="texting">ใส่ข้อความ
+                <input type="checkbox" name="table">สร้างตาราง
+        </div>
+        <div>
+            <button type="submit">บันทึกข้อมูล</button>
+            <button type="reset">ล้างข้อมูล</button>
+        </div>
+    </form>
+    <table border="1"><!--ตารางแสดงผล-->
+            <p>ในพืช 100 กรัมจะมี...</p>
+            <thead>
+                <th>พลังงาน/แร่ธาตุ</th>
+                <th>จำนวน</th>
+                <th>หน่วย</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>โปรตีน</td>
+                    <td>20</td>
+                    <td>กรัม</td>
+                </tr>
+                <tr>
+                    <td>คาร์โบ</td>
+                    <td>10</td>
+                    <td>กรัม</td>
+                </tr>
+            </tbody>
+        </table>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+body{/*พื้นหลังทั้งหมด ในส่วน body*/
+    background-color: #E8F5E9;
+    margin: 0;
+}
+.headbar{/*ในส่วน nav เชื่อมไปยังหน้าต่าง ๆ*/
+    top: 0;
+    width: 100%;
+    background-color: #CCFBD4;
+    position: fixed;
+    display: flex;
+    border-bottom: solid #02542D 2px;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+.search{/*ช่องค้นหาพืช*/
+    position: absolute;
+    left: 40px;
+}
+input{/*ตัว element input*/
+    width: 300px;
+    height: 35px;
+    font-size: 25px;
+    color: #02542D;
+    border-radius: 5px;
+    border: 1px solid #1B7D1E;
+}
+.center-menu{/*ตำแหน่งปุ่มไปหน้าอื่น ๆ รวมกัน*/
+    display: flex;
+    align-items: center;
+}
+button{/*ปุ่มไปยังหน้าอื่น ๆ*/
+    font-size: 30px;
+    margin: 10px;
+    padding: 10px;
+    border: hidden;
+    background-color: #CCFBD4;
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+}
+button#Static{/*ปุ่มหน้าปัจจุบัน*/
+    border: solid #02542D 2px;
+    background-color: #02542D;
+    color: white;
+    border-radius: 10px;
+}
+button:hover:not(#Static):not(#Logout):not(#detail){/*ปุ่มที่ไม่ใช่หน้าปัจจุบัน เว้น ปุ่มออกกับปุ่มรายละเอียด*/
+    border: solid #02542D 2px;
+    background-color: #BEF885;
+    color: #1B7D1E;
+    border-radius: 10px;
+}
+#Logout:hover{/*ปุ่มออกจากระบบ*/
+    border: solid red 2px;
+    background-color: red;
+    color: white;
+    border-radius: 10px;
+}
+.exit {/*ตำแหน่งปุ่มออกจากระบบ*/
+    position: absolute;
+    right: 20px;
+}
+.container{/*ตัวครอบเนื้อหาด้านในที่ไม่ใช่ nav*/
+    margin-top: 80px;
+    border-bottom: solid #02542D 2px;
+    display: block;
+    flex-direction: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+.content{/*ตัวเนื้อหาใน container*/
+    margin-top: 80px;
+    font-size: 25px;
+    color: #02542D;
+    display: flex;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+}
+label.des,input.datepick,select#dateperiod{/*เว้นซ้ายและบนให้กับ label input select ใน content*/
+    margin-top: 10px;
+    margin-left: 10px;
+}
+.datepick{/*ปุ่มเลือกวันที่ ปฏิทิน*/
+    width: 180px;
+}
+select#dateperiod{/*ปุ่มเลือกช่วงเวลา*/
+    height: 40px;
+    font-size: 25px;
+    color: #02542D;
+    text-align: center;
+    background-color: white;
+    border: 1px solid #02542D;
+    border-radius: 5px;
+}
+button#detail{/*ปุ่มรายละเอียด*/
+    border-radius: 20px;
+}
+button#detail:active{/*เอฟเฟกต์ตอนกดปุ่มรายละเอียด*/
+    background-color: #1B7D1E;
+    color: white;
+    border-radius: 20px;
+}
+.content#plant{/*กล่องพืชแต่ละชนิด*/
+    width: 400px;
+    display: inline-block;
+    padding-top: 50px;
+    margin: 40px;
+    text-align: center;
+    border: solid #02542D 2px;
+    border-radius: 5px;
+    font-size: 35px;
+    box-shadow: 1px 1px 10px;/*x y burl size*/
+}
