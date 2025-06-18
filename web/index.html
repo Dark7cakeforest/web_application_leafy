@@ -5,25 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="เว็บแอปพลิเคชันของ ปริญญานิพนธ์เรื่องระบบจำแนกพืช">
     <meta name="author" content="Napatsara Phanin">
-    <meta name="keywords" content="Project AI detect">
+    <meta name="keywords" content="Project AI detect plant">
     <!--หัวข้อหน้าเว็บ-->
     <title>Web Application for Admin</title>
     <!--css-->
     <link rel="stylesheet" href="../src/style.css">
 </head>
 <body>
-    <nav class="headbar"><!--ตัวเชื่อมหน้า ปุ่มต่าง ๆ-->
-        <!--ช่องค้นหาด้านซ้าย-->
-        <div class="search"><input type="text" name="search" placeholder="&nbsp;&telrec;&nbsp;Searching Plant.."></input></div>
-        <!--เมนูตรงกลาง-->
-        <div class="center-menu">
-            <div class="header"><button id="Static" onclick="" href="static.html">Static</button></div>
-            <div class="header"><button id="Edit" onclick="" href="edit_plant.html">Edit Plant</button></div>
-            <div class="header"><button id="Feedback" onclick="" href="feedback.html">Feedback</button></div>
-        </div>
-        <!--ออกจากระบบด้านขวา-->
-            <div class="exit"><button id="Logout" onclick="">Logout</button></div>
-    </nav>
+    <header>
+        <nav class="headbar"><!--ตัวเชื่อมหน้า ปุ่มต่าง ๆ-->
+            <!--ช่องค้นหาด้านซ้าย-->
+            <div class="search-area" id="search"><input type="text" name="search" placeholder="&nbsp;&telrec;&nbsp;Searching Plant.."></input></div>
+            <!--เมนูตรงกลาง-->
+            <div class="menu-area" id="center-menu">
+                <div class="header"><a class="linkanotherpage" id="Static" onclick="" href="index.html">Static</a></div>
+                <div class="header"><a class="linkanotherpage" id="Edit" onclick="" href="edit_plant.html">Edit Plant</a></div>
+                <div class="header"><a class="linkanotherpage" id="Feedback" onclick="" href="feedback.html">Feedback</a></div>
+            </div>
+            <!--ออกจากระบบด้านขวา-->
+            <div class="exit-area" id="exit">
+                <p id="displayname"></p>
+                <a id="Logout" onclick="logout()">Logout</a>
+            </div>
+        </nav>
+    </header>
     <div class="container"><!--ตัวกรอบนอกพืชแต่ละชนิด-->
         <!--กล่องบรรจุพืชแต่ละชนิด-->
         <div class="content">
@@ -35,30 +40,14 @@
                 <option value="3days">ใน 3 วัน</option>
                 <option value="7days">ใน 7 วัน</option>
             </select>
-            <button href="static.html" id="detail">รายละเอียดแต่ละรายการ</button><!--ปุ่มสลับไปดูแต่ละรายการ-->
+            <a href="static.html" id="detail">รายละเอียดแต่ละรายการ</a><!--ปุ่มสลับไปดูแต่ละรายการ-->
         </div>
         <hr style="width: 50%;">
         <div class="content" id="plant"><!--กล่องพืชแต่ละรายการ-->
             <img src="../src/images/horapa.jpg" alt="this is content" height="300" width="300">
-            <p>this is content</p>
-        </div>
-        <div class="content" id="plant">
-            <img src="../src/images/horapa.jpg" alt="this is content" height="300" width="300">
-            <p>this is content</p>
-        </div>
-        <div class="content" id="plant">
-            <img src="../src/images/horapa.jpg" alt="this is content" height="300" width="300">
-            <p>this is content</p>
-        </div>
-        <div class="content" id="plant">
-            <img src="../src/images/horapa.jpg" alt="this is content" height="300" width="300">
-            <p>this is content</p>
-        </div>
-        <div class="content" id="plant">
-            <img src="../src/images/horapa.jpg" alt="this is content" height="300" width="300">
-            <p>this is content</p>
+            <p id="context">this is content</p>
         </div>
     </div>
-    <script src="script.js"></script>
+    <script src="script/testlogin.js"></script>
 </body>
 </html>
