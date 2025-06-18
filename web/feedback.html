@@ -6,8 +6,9 @@
     <title>Feedback</title>
 </head>
 <body>
+    
     <h1>Feedback Page</h1>
-    <p>จำนวน Feedback ที่ส่งมาทั้งหมด 20 คน</p>
+    <p>จำนวน Feedback ที่ส่งมาทั้งหมด 0 คน</p>
     <table border="1"><!--ตารางแสดงผลแต่ละคนที่ส่ง Feedback เข้ามา-->
             <thead>
                 <th>ID ผู้ส่ง</th>
@@ -15,21 +16,11 @@
                 <th>สร้างเมื่อ</th>
                 <th>จัดการข้อมูล</th>
             </thead>
-            <tbody>
-                <tr>
-                    <td>dsadsad</td>
-                    <td>Lorem, ipsum dolor.</td>
-                    <td>วันที่ 2</td>
-                    <td align="center"><button>แก้ไข</button></td>
-                </tr>
-                <tr>
-                    <td>eqweqwe</td>
-                    <td>Lorem ipsum dolor sit amet.</td>
-                    <td>วันที่ 3</td>
-                    <td align="center"><button>แก้ไข</button></td>
-                </tr>
+            <tbody id="test01">
             </tbody>
-        </table>
-    <script src="script.js"></script>
+    </table>
+    <button onclick="createNewFeedbackbox()">เพิ่มfeedback</button>
+    <script src="script/feedback.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.0/dist/sweetalert2.all.min.js"></script>
 </body>
 </html>
