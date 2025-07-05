@@ -8,7 +8,7 @@ function login(){
     const password = document.getElementById("password").value;
 
     const xhttp = new XMLHttpRequest();//เรียก api
-    xhttp.open("POST","https://www.melivecode.com/api/login");//method open + url
+    xhttp.open("POST","http://localhost:3001/api/login");//method open + url ของ api ฐานข้อมูล
     xhttp.setRequestHeader("Content-Type","application/json;charset=UTF-8");//ส่ง header ไป api
     xhttp.send(//ส่งข้อมูลไป api
         JSON.stringify({"username":username,"password":password})
@@ -21,7 +21,7 @@ function login(){
                 localStorage.setItem("jwt",objects["accessToken"]);
                 Swal.fire({
                     title: objects['message'],
-                    icon: 'sucsess'
+                    icon: 'success'
                     }).then((result) => {
                     if (result.isConfirmed) {
                         window.location.href = './index.html'

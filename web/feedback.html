@@ -6,8 +6,21 @@
     <title>Feedback</title>
 </head>
 <body>
-    
-    <h1>Feedback Page</h1>
+    <nav class="headbar"><!--ตัวเชื่อมหน้า ปุ่มต่าง ๆ-->
+            <!--ช่องค้นหาด้านซ้าย-->
+            <div class="search-area" id="search"><input type="text" name="search" placeholder="&nbsp;&telrec;&nbsp;Searching Plant.."></input></div>
+            <!--เมนูตรงกลาง-->
+            <div class="menu-area" id="center-menu">
+                <div class="header"><a class="linkanotherpage" id="Static" onclick="" href="index.html">Static</a></div>
+                <div class="header"><a class="linkanotherpage" id="Edit" onclick="" href="edit_plant.html">Edit Plant</a></div>
+                <div class="header"><a class="linkanotherpage" id="Feedback" onclick="" href="feedback.html">Feedback</a></div>
+            </div>
+            <!--ออกจากระบบด้านขวา-->
+            <div class="exit-area" id="exit">
+                <p id="displayname"></p>
+                <a id="Logout" onclick="logout()">Logout</a>
+            </div>
+        </nav>
     <p>จำนวน Feedback ที่ส่งมาทั้งหมด 0 คน</p>
     <table border="1"><!--ตารางแสดงผลแต่ละคนที่ส่ง Feedback เข้ามา-->
             <thead>
@@ -19,7 +32,7 @@
             <tbody id="test01">
             </tbody>
     </table>
-    <button onclick="createNewFeedbackbox()">เพิ่มfeedback</button>
+    <script src="script/authGuard.js"></script>
     <script src="script/feedback.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.0/dist/sweetalert2.all.min.js"></script>
 </body>

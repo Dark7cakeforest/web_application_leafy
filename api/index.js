@@ -1,31 +1,36 @@
-const http = require('http')
 const fs = require('fs')
-const url = require('url')
+const path = require('path')
 const express = require('express')
-const indexPage = fs.readFileSync(`${__dirname}/../web/index.html`,'utf-8')
-const loginPage = fs.readFileSync(`${__dirname}/../web/login.html`,'utf-8')
-const staticPage = fs.readFileSync(`${__dirname}/../web/static.html`,'utf-8')
-const editPage = fs.readFileSync(`${__dirname}/../web/edit_plant.html`,'utf-8')
-const feedbackPage = fs.readFileSync(`${__dirname}/../web/feedback.html`,'utf-8')
+const server = express();
 
-const server = http.createServer((req,res)=>{//สร้าง req,res สำหรับ url ที่เข้าไป
-    const {pathname,query} = url.parse(req.url,true)
-    res.writeHead(200)
-    if(pathname==="/login" || pathname==="/"){
-        res.end(loginPage)
-    }else if(pathname==="/index"){
-        res.end(indexPage)
-    }else if(pathname==="/static"){
-        res.end(staticPage)
-    }else if(pathname==="/edit_plant"){
-        res.end(editPage)
-    }else if(pathname==="/feedback"){
-        res.end(feedbackPage)
-    }else{
-        res.writeHead(404)
-        res.end("<h1>404 Not found</h1>")
-    }
+//ดึงพวกภาพ กับ static ต่าง ๆ มาใช้
+server.use(express.static(path.join(__dirname, '../web')));
+
+server.get(['/','/login'],(req,res)=>{//บังคับมาหน้า login ก่อน (รอรับ jwt)
+    res.sendFile(path.join(__dirname, '../web/login.html'));
 })
+
+server.get('/index',(req,res)=>{//หน้าแรก (ต้องมี token ถึงเข้าได้)
+    res.sendFile(path.join(__dirname, '../web/index.html'));
+})
+
+server.get('/static',(req,res)=>{//สถิติ (ต้องมี token ถึงเข้าได้)
+    res.sendFile(path.join(__dirname, '../web/static.html'));
+})
+
+server.get('/edit_plant',(req,res)=>{//ดูพืช แก้ไขพืช (ต้องมี token ถึงเข้าได้)
+    res.sendFile(path.join(__dirname, '../web/edit_plant.html'));
+})
+
+server.get('/feedback',(req,res)=>{//หน้าที่เอาไว้รับข้อเสนอแนะ (ต้องมี token ถึงเข้าได้)
+    res.sendFile(path.join(__dirname, '../web/feedback.html'));
+})
+
+// หน้า 404
+server.use((req, res) => {
+  res.status(404).send('404 Not Found');
+});
+
 server.listen(8000,'localhost',()=>{//เซิฟเวอร์พอร์ต8000
     console.log("Start server at port 8000")
 })
