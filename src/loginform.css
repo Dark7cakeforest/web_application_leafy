@@ -1,8 +1,23 @@
-.form.login{
+body{
+    display: flex;
+    text-align: center;
+}
+.form_login{
     width: 500px;
+    margin-top: 10px;
+    background-color: #BEF885;
 }
 input[type="text"],input[type="password"]{
     font-size: 35px;
     color: #02542D;
-
+    margin-top: 15px;
+}
+button{
+    margin-top: 20px;
+    padding: 7px;
+    font-size: 30px;
+    border: 2px solid #0f7041;
+    border-radius: 20px;
+    background-color: #02542D;
+    color: #FFFFFF;
 }

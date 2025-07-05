@@ -31,7 +31,7 @@
     </header>
     <div class="container"><!--ตัวกรอบนอกพืชแต่ละชนิด-->
         <!--กล่องบรรจุพืชแต่ละชนิด-->
-        <div class="content">
+        <div class="contentsearch">
             <label for="searchdate" class="des">ค้นหาตามช่วงวันที่&nbsp;</label>
             <input type="date" class="datepick"><!--เลือกวันที่-->
             <select name="ช่วงวันที่" id="dateperiod"><!--เลือกช่วงวัน dropdown-->
@@ -43,11 +43,11 @@
             <a href="static.html" id="detail">รายละเอียดแต่ละรายการ</a><!--ปุ่มสลับไปดูแต่ละรายการ-->
         </div>
         <hr style="width: 50%;">
-        <div class="content" id="plant"><!--กล่องพืชแต่ละรายการ-->
-            <img src="../src/images/horapa.jpg" alt="this is content" height="300" width="300">
-            <p id="context">this is content</p>
+        <div id="plants"><!--กล่องพืชแต่ละรายการ-->
+            <!--พืชจาก script-->
         </div>
     </div>
-    <script src="script/testlogin.js"></script>
+    <script src="script/authGuard.js"></script>
+    <script src="script/loadplant.js"></script>
 </body>
 </html>

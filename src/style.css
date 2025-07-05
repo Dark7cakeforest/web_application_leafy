@@ -111,7 +111,7 @@ a#Logout{/*ปุ่มออกจากระบบ*/
     align-items: center;
     text-align: center;
 }
-.content{/*ตัวเนื้อหาใน container*/
+.contentsearch{/*ตัวเนื้อหาใน container*/
     margin-top: 80px;
     font-size: 25px;
     color: #02542D;
@@ -151,12 +151,25 @@ a#detail:active{/*เอฟเฟกต์ตอนกดปุ่มราย�
     color: white;
     border-radius: 10px;
 }
-.content#plant{/*กล่องพืชแต่ละชนิด*/
-    width: 400px;
-    display: inline-block;
-    padding-top: 50px;
-    margin: 40px;
+#plants{/*กล่องที่ยัดพืชแต่ละชนิด*/
+    width: 80%;
+    display: inline-flex;
+    flex-wrap: wrap;
+    margin-top: 40px;
+    align-items: center;
     text-align: center;
+    font-size: 35px;
+    border: solid #02542D 2px;
+    box-shadow: none;
+}
+.content{/*กล่องพืชแต่ละชนิด*/
+    margin: 35px;
+    display: inline-block;
+    width: 400px;
+    height: 400px;
+    flex-direction: center;
+    text-align: center;
+    align-items: center;
     border: solid #02542D 2px;
     border-radius: 5px;
     font-size: 35px;
