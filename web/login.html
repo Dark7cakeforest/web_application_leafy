@@ -4,16 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Authentication</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../src/loginform.css">
+    <link rel="icon" type="image/x-icon" href="../src/favicon.ico">
 </head>
-<body>
-    <h1>Web-Application for Admin</h1>
-    <form class="form_login" method="POST" onsubmit="return login()"><!--ฟอร์มเข้าสู่ระบบของแอดมิน-->
-        <input type="text" id="username" placeholder="username" required>
-        <input type="password" id="password" placeholder="password" required>
-        <button type="submit">Login</button>
-    </form>
+<body class="bg-light">
+   <div class="container text-center mt-5">
+    <h1 class="fw-bold">Web-Application for Admin</h1>
+  </div>
+    <div class="container d-flex justify-content-center align-items-start mt-4">
+    <div class="form-box w-100" style="max-width: 500px;">
+      <form method="POST" onsubmit="return login()"><!--ฟอร์มเข้าสู่ระบบของแอดมิน-->
+        <div class="mb-3">
+          <input type="text" class="form-control form-control-lg" id="username" placeholder="Username" style="color: #02542D;" required>
+        </div>
+        <div class="mb-3">
+          <input type="password" class="form-control form-control-lg" id="password" placeholder="Password" style="color: #02542D;" required>
+        </div>
+        <div class="d-grid">
+          <button type="submit" class="btn btn-custom btn-lg">Login</button>
+        </div>
+      </form>
+    </div>
+  </div>
     <script src="script/login.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.0/dist/sweetalert2.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
