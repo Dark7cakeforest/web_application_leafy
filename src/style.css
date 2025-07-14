@@ -159,7 +159,7 @@ a#detail:active{/*เอฟเฟกต์ตอนกดปุ่มราย�
     align-items: center;
     text-align: center;
     font-size: 35px;
-    border: solid #02542D 2px;
+    /*ขอบกล่อง*/
     box-shadow: none;
 }
 .content{/*กล่องพืชแต่ละชนิด*/

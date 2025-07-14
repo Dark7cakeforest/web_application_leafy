@@ -3,6 +3,7 @@ const path = require('path')
 const express = require('express')
 const server = express();
 
+server.set('view engine', 'ejs');//set ตัว ejs สำหรับ dynamic web
 //ดึงพวกภาพ กับ static ต่าง ๆ มาใช้
 server.use(express.static(path.join(__dirname, '../web')));
 
