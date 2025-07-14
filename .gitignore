@@ -1,8 +1,6 @@
 .vscode/settings.json
 /node_modules/.bin
-package.json
 node_modules/.bin/nodemon
 node_modules/.bin/nodemon.cmd
-package-lock.json
 /node_modules
 api/databasepassword
