@@ -1,0 +1,30 @@
+{
+  "name": "web_application_leafy",
+  "version": "1.0.0",
+  "description": "web app for admin",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon ./api/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dark7cakeforest/web_application_leafy.git"
+  },
+  "author": "Napatsara Phanin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Dark7cakeforest/web_application_leafy/issues"
+  },
+  "homepage": "https://github.com/Dark7cakeforest/web_application_leafy#readme",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "mysql2": "^3.14.1"
+  },
+  "keywords": [],
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
