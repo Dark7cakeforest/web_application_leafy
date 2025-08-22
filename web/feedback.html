@@ -4,37 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Feedback</title>
+    <link rel="stylesheet" href="../src/style.css">
     <link rel="icon" type="image/x-icon" href="../src/favicon.ico">
 </head>
 <body>
-    <nav class="headbar"><!--ตัวเชื่อมหน้า ปุ่มต่าง ๆ-->
-            <!--ช่องค้นหาด้านซ้าย-->
-            <div class="search-area" id="search"><input type="text" name="search" placeholder="&nbsp;&telrec;&nbsp;Searching Plant.."></input></div>
-            <!--เมนูตรงกลาง-->
-            <div class="menu-area" id="center-menu">
-                <div class="header"><a class="linkanotherpage" id="Static" onclick="" href="index.html">Static</a></div>
-                <div class="header"><a class="linkanotherpage" id="Edit" onclick="" href="edit_plant.html">Edit Plant</a></div>
-                <div class="header"><a class="linkanotherpage" id="Feedback" onclick="" href="feedback.html">Feedback</a></div>
-            </div>
-            <!--ออกจากระบบด้านขวา-->
-            <div class="exit-area" id="exit">
-                <p id="displayname"></p>
-                <a id="Logout" onclick="logout()">Logout</a>
-            </div>
-        </nav>
-    <p>จำนวน Feedback ที่ส่งมาทั้งหมด 0 คน</p>
-    <table border="1"><!--ตารางแสดงผลแต่ละคนที่ส่ง Feedback เข้ามา-->
-            <thead>
-                <th>ID ผู้ส่ง</th>
-                <th>ข้อความ</th>
-                <th>สร้างเมื่อ</th>
-                <th>จัดการข้อมูล</th>
-            </thead>
-            <tbody id="test01">
-            </tbody>
-    </table>
+    <header>
+        <div id="navbar-placeholder"></div>
+            <script>
+            fetch('navbar.html')
+                .then(response => response.text())
+                .then(data => document.getElementById('navbar-placeholder').innerHTML = data);
+            </script>
+    </header>
+        <div class="container">
+            <p class="explain">จำนวน Feedback ที่ส่งมาทั้งหมด 1 คน</p>
+            <table border="1" class="table"><!--ตารางแสดงผลแต่ละคนที่ส่ง Feedback เข้ามา-->
+                    <thead>
+                        <th>ID ผู้ส่ง</th>
+                        <th>ข้อความ</th>
+                        <th>สร้างเมื่อ</th>
+                        <th>จัดการข้อมูล</th>
+                    </thead>
+                    <tbody id="feedback">
+                        <td>1</td>
+                        <td>แม่นมากค่ะ</td>
+                        <td>26/07/2568 3.20</td>
+                        <td><button>ลบ</button></td>
+                    </tbody>
+            </table>
+        </div>
     <script src="script/authGuard.js"></script>
     <script src="script/feedback.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.0/dist/sweetalert2.all.min.js"></script>
 </body>
 </html>

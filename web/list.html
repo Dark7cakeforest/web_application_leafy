@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static</title>
+    <link rel="stylesheet" href="../src/style.css">
+    <link rel="icon" type="image/x-icon" href="../src/favicon.ico">
+</head>
+<body>
+    <header>
+        <div id="navbar-placeholder"></div>
+            <script>
+            fetch('navbar.html')
+                .then(response => response.text())
+                .then(data => document.getElementById('navbar-placeholder').innerHTML = data);
+            </script>
+        </nav>
+    </header>
+    <div class="container"><!--ตัวกรอบนอกพืชแต่ละชนิด-->
+        <!--กล่องบรรจุพืชแต่ละชนิด-->
+        <div class="contentsearch">
+            <select name="viewMode" id="dateperiod"><!--เลือกช่วงวัน dropdown-->
+                <option value="perPlant" onclick="showPerPlant()">แยกแต่ละพืช</option>
+                <option value="all" onclick="showAll()">ทั้งหมด</option>
+            </select>
+            <input type="date" class="datepick"><!--เลือกวันที่-->
+            <select name="ช่วงวันที่" id="dateperiod"><!--เลือกช่วงวัน dropdown-->
+                <option value="today">วันนี้</option>
+                <option value="yesterday">เมื่อวาน</option>
+                <option value="3days">ใน 3 วัน</option>
+                <option value="7days">ใน 7 วัน</option>
+            </select>
+            <a href="static.html" id="detail">10 อันดับประมวลผล</a><!--ปุ่มสลับไปดูแต่ละรายการ-->
+        </div>
+        <hr style="width: 50%;">
+        <div id="plants" class="separatePlant"><!--กล่องพืชแต่ละรายการ-->
+            <!--พืชจาก script-->
+        </div>
+        <table border="1" class="allOfList" style="display: none;"><!--ตารางแสดงผลพืชที่ถูกประมวลผลทั้งหมด-->
+            <thead>
+                <th>ลำดับที่</th>
+                <th>ผลลัพธ์การประมวลผล</th>
+                <th>วันที่ประมวลผล</th>
+                <th>จัดการข้อมูล</th>
+            </thead>
+            <tbody id="queryAllResult">
+            </tbody>
+        </table>
+        <div id="selectedPlant" class="selectedPlant" style="display: none;"><!--ฟิลเตอร์เฉพาะพืชหนึ่งชนิด-->
+            <table border="1" class="selectedPlant"><!--ตารางแสดงผลพืชที่ถูกประมวลผลทั้งหมด-->
+            <thead>
+                <th>ลำดับที่</th>
+                <th>ผลลัพธ์การประมวลผล</th>
+                <th>วันที่ประมวลผล</th>
+                <th>จัดการข้อมูล</th>
+            </thead>
+                <tbody id="plantSelect">
+                </tbody>
+            </table>
+            <button onclick="showPerPlant()">ย้อนกลับ</button>
+        </div>
+    </div>
+        <script src="script/listSelect.js"></script>
+        <script src="script/loadlist.js"></script>
+        <script src="script/authGuard.js"></script>
+        <script src="script/loadplant.js"></script>
+</body>
+</html>

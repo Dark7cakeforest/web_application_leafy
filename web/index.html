@@ -14,21 +14,12 @@
 </head>
 <body>
     <header>
-        <nav class="headbar"><!--ตัวเชื่อมหน้า ปุ่มต่าง ๆ-->
-            <!--ช่องค้นหาด้านซ้าย-->
-            <div class="search-area" id="search"><input type="text" name="search" placeholder="&nbsp;&telrec;&nbsp;Searching Plant.."></input></div>
-            <!--เมนูตรงกลาง-->
-            <div class="menu-area" id="center-menu">
-                <div class="header"><a class="linkanotherpage" id="Static" onclick="" href="index.html">Static</a></div>
-                <div class="header"><a class="linkanotherpage" id="Edit" onclick="" href="edit_plant.html">Edit Plant</a></div>
-                <div class="header"><a class="linkanotherpage" id="Feedback" onclick="" href="feedback.html">Feedback</a></div>
-            </div>
-            <!--ออกจากระบบด้านขวา-->
-            <div class="exit-area" id="exit">
-                <p id="displayname"></p>
-                <a id="Logout" onclick="logout()">Logout</a>
-            </div>
-        </nav>
+        <div id="navbar-placeholder"></div>
+            <script>
+            fetch('navbar.html')
+                .then(response => response.text())
+                .then(data => document.getElementById('navbar-placeholder').innerHTML = data);
+            </script>
     </header>
     <div class="container"><!--ตัวกรอบนอกพืชแต่ละชนิด-->
         <!--กล่องบรรจุพืชแต่ละชนิด-->
@@ -41,7 +32,7 @@
                 <option value="3days">ใน 3 วัน</option>
                 <option value="7days">ใน 7 วัน</option>
             </select>
-            <a href="static.html" id="detail">รายละเอียดแต่ละรายการ</a><!--ปุ่มสลับไปดูแต่ละรายการ-->
+            <a href="list.html" id="detail">รายละเอียดแต่ละรายการ</a><!--ปุ่มสลับไปดูแต่ละรายการ-->
         </div>
         <hr style="width: 50%;">
         <div id="plants"><!--กล่องพืชแต่ละรายการ-->

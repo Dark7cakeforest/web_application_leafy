@@ -1,0 +1,303 @@
+/*laptop and other*/
+* {
+  box-sizing: border-box;
+}
+body{/*พื้นหลังทั้งหมด ในส่วน body*/
+    background-color: #E8F5E9;
+    margin: 0;
+    padding: 0;
+}
+header{/*navภาพรวม*/
+    position: fixed;
+    width: 100%;
+    top: 0;
+    border-bottom: solid #02542D 2px;
+    background-color: #CCFBD4;
+}
+.headbar{/*ในส่วน nav เชื่อมไปยังหน้าต่าง ๆ*/
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    
+}
+.search-area {/*กล่องแรกของช่องค้นหา*/
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.menu-area {/*กล่องกลางของพวกไปหน้าอื่น*/
+    margin-top: 10px;
+    margin-bottom: 10px;
+    flex: 2;
+    display: flex;
+    justify-content: center;
+}
+
+.exit-area {/*กล่องปุ่มออก*/
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+#search{/*ช่องค้นหาพืช*/
+    input{/*ตัว element input*/
+    width: 30vw;
+    height: 35px;
+    font-size: 25px;
+    color: #02542D;
+    border-radius: 5px;
+    border: 1px solid #1B7D1E;
+    margin-left: 30px;
+    }
+}
+#center-menu{/*ตำแหน่งปุ่มไปหน้าอื่น ๆ รวมกัน*/
+    justify-items: center;
+}
+a:visited {/*กันไม่ให้ปุ่มที่กด link ไปหน้าอื่นเปลี่ยนสี*/
+  color: #02542D;
+}
+/* ปุ่มเมนูทั้งหมด */
+a.linkanotherpage,
+a#Edit,
+a#Logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 110px;           /* ความกว้างขั้นต่ำเท่ากัน */
+    height: 45px;               /* ความสูงเท่ากัน */
+    padding: 0 15px;            /* padding ซ้าย-ขวา */
+    font-size: 26px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+/* ปุ่ม Active (Edit Plant) */
+a#Edit {
+    background-color: #02542D;
+    color: white;
+    border: 2px solid #02542D;
+}
+a:hover:not(#Edit):not(#Logout):not(#delete){/*{/*ปุ่มที่ไม่ใช่หน้าปัจจุบัน เว้น ปุ่มออกกับปุ่มรายละเอียด*/
+    
+    border: solid #02542D 2px;
+    background-color: #BEF885;
+    color: #1B7D1E;
+    border-radius: 10px;
+    text-decoration: none;
+}
+a#Logout{/*ปุ่มออกจากระบบ*/
+    margin-left: auto; /* ดันไปชิดขวาสุด */
+    color: red;
+    border: 2px solid transparent;
+    background-color: transparent;
+}
+#Logout:hover{/*เอฟเฟคปุ่มออกจากระบบ*/
+    border: 2px solid red;
+    background-color: red;
+    color: white;
+}
+#exit {/*ตำแหน่งปุ่มออกจากระบบ*/
+    justify-content: flex-end;
+}
+.container{/*ตัวครอบเนื้อหาด้านในที่ไม่ใช่ nav*/
+    margin-top: 80px;
+    display: block;
+    flex-direction: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+.content{/*ตัวเนื้อหาใน container*/
+    margin-top: 40px;
+    font-size: 25px;
+    color: #02542D;
+    display: flex;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    
+}
+.content#plant{/*กล่องพืชแต่ละชนิด*/
+    width: 400px;
+    height: 550px;
+    display: inline-block;
+    padding-top: 50px;
+    margin: 40px;
+    text-align: center;
+    border: solid #02542D 2px;
+    border-radius: 5px;
+    font-size: 35px;
+    box-shadow: 1px 1px 10px;/*x y burl size*/
+}
+.button#edit-btn{
+    color: #02542D;
+    text-decoration: none;
+    font-size: 30px;
+    border: hidden;
+    background-color: #BEF885;
+    padding: 10px;
+    border: 2px solid transparent;
+    font-family: Arial, Helvetica, sans-serif;
+    border-radius: 10px;
+    margin-right: 30px;
+}
+.buttondelete#delete{
+    color: #f7f4f5;
+    text-decoration: none;
+    font-size: 30px;
+    border: hidden;
+    background-color: #ff0000;
+    padding: 10px;
+    border: 2px solid transparent;
+    font-family: Arial, Helvetica, sans-serif;
+    border-radius: 10px;
+    margin-right: 30px;
+}
+.buttondelete#delete:hover{/*เอฟเฟคปุ่มออกจากระบบ*/
+    border: solid #000000 2px;
+    background-color: #f5f5f5;
+    color: #ee0606;
+    border-radius: 10px;
+    text-decoration: none;
+}
+.menu-area.show {
+  display: flex !important;
+}
+/* 🍔 Hamburger button */
+.hamburger {
+  display: none;
+  font-size: 30px;
+  margin-left: 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ✅ MOBILE */
+@media only screen and (max-width: 480px) {
+    label.des,input.datepick,select#dateperiod,a#detail{/*เว้นซ้ายและบนให้กับ label input select ใน content*/
+    margin-top: 10px;
+    margin-left: 130px;
+    margin-right: 40px;
+    
+}
+    .filter-row {
+    flex-direction: column;
+  }
+  #detail, .datepick, #dateperiod {
+    width: 90vw;
+  }
+  .hamburger {
+    display: block;
+    align-self: flex-start;
+  }
+
+  .menu-area {
+    display: none !important; /* ซ่อนไว้ก่อน */
+    flex-direction: column;
+    width: 100%;
+    background-color: #CCFBD4;
+    margin-top: 10px;
+  }
+
+  .menu-area.show ~ .search-area{
+    display: none;
+  }
+
+  .menu-area .header {
+    margin: 10px 0;
+  }
+
+  /* ปิด .exit-area เดิมใน mobile */
+  .exit-area {
+    display: none !important;
+  }
+  #search input {
+    width: 90vw; /* ✅ ยืดช่องค้นหาให้เต็มจอใน mobile */
+    margin: 10px auto;
+  }
+.search-area {
+    width: 100%;
+    justify-content: center;
+  }
+  /* ปุ่ม Logout ในเมนูแฮมเบอร์เกอร์ */
+  #Logout {
+    font-size: 28px;
+    padding: 10px;
+    margin: 0 auto;
+    background-color: #CCFBD4;
+    color: red;
+    border: none;
+    display: block;
+  }
+
+  #Logout:hover {
+    background-color: red;
+    color: white;
+    border-radius: 10px;
+  }
+}
+/* ✅ สำหรับช่วงจอ 480px - 1020px */
+@media (min-width: 480px) and (max-width: 1020px) {
+  .headbar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 10px;
+  }
+
+  .search-area {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .search-area input {
+    width: 60vw;
+    height: 25px;
+    font-size: 16px;
+    margin-left: 10px;
+  }
+  #displayname {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #02542D;
+    margin-left: 15px;
+  }
+  .menu-area {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-evenly;
+    align-items: center;
+    gap: 5px; /* ✅ ลดช่องว่างระหว่างปุ่ม */
+  }
+  a.linkanotherpage,
+  a#Static,
+  a#Logout {
+    font-size: 26px;         /* ✅ ลดขนาดตัวอักษร */
+    padding: 5px 8px;        /* ✅ ลด padding */
+    margin: 0;               /* ✅ ตัด margin */
+  }
+
+  a#Logout {
+    color: red;
+    font-size: 26px;
+    margin-right: 0;
+  }
+  .exit-area {
+    display: none !important; /* ปิดส่วนเดิมของ logout */
+  }
+  .content{/*ตัวเนื้อหาใน container*/
+    margin-top: 140px; /* ขยับลงให้พอดีกับ nav */
+}
+
+  /* ปิด hamburger */
+  .hamburger {
+    display: none;
+  }
+}

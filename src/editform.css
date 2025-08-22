@@ -1,0 +1,232 @@
+/*laptop and other*/
+* {
+  box-sizing: border-box;
+}
+body{/*พื้นหลังทั้งหมด ในส่วน body*/
+    background-color: #E8F5E9;
+    margin: 0;
+    padding: 0;
+}
+header{/*navภาพรวม*/
+    position: fixed;
+    width: 100%;
+    top: 0;
+    border-bottom: solid #02542D 2px;
+    background-color: #CCFBD4;
+}
+h1{
+    margin-left: 10px;
+    color: #02542D;
+}
+h2{
+     margin-left: 10px;
+     color: #02542D;
+}
+form{
+    margin-top: 150px;
+    margin-left: 10px;
+}
+table{
+    margin-left: 10px;
+}
+p{
+    margin-left: 10px;
+}
+label{
+    color: #02542D;
+}
+input{
+    color: #1B7D1E;
+}
+text{
+    margin-top: 20px;
+}
+/* กลุ่ม input/select/a ให้อยู่แถวเดียวกัน */
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+label.des,input.datepick,select#dateperiod,a#detail{/*เว้นซ้ายและบนให้กับ label input select ใน content*/
+    margin-top: 10px;
+    margin-left: 10px;
+}
+.datepick{/*ปุ่มเลือกวันที่ ปฏิทิน*/
+    width: 10vw;
+}
+select#dateperiod,.datepick{/*ปุ่มเลือกช่วงเวลา*/
+    height: 40px;
+    font-size: 25px;
+    color: #02542D;
+    text-align: center;
+    background-color: white;
+    border: 1px solid #02542D;
+    border-radius: 5px;
+}
+a#detail{/*ปุ่มรายละเอียด*/
+    text-decoration: none;
+    border-radius: 10px;
+    border: 1px solid #02542D;
+    font-size: 25px;
+    padding: 5px;
+    color: #02542D;
+    background-color: #BEF885;
+}
+a#detail:active{/*เอฟเฟกต์ตอนกดปุ่มรายละเอียด*/
+    text-decoration: none;
+    background-color: #1B7D1E;
+    color: white;
+    border-radius: 10px;
+}
+.content#plant{/*กล่องพืชแต่ละชนิด*/
+    width: 400px;
+    display: inline-block;
+    padding-top: 50px;
+    margin: 40px;
+    text-align: center;
+    border: solid #02542D 2px;
+    border-radius: 5px;
+    font-size: 35px;
+    box-shadow: 1px 1px 10px;/*x y burl size*/
+}
+.menu-area.show {
+  display: flex !important;
+}
+/* 🍔 Hamburger button */
+.hamburger {
+  display: none;
+  font-size: 30px;
+  margin-left: 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ✅ MOBILE */
+@media only screen and (max-width: 480px) {
+    label.des,input.datepick,select#dateperiod,a#detail{/*เว้นซ้ายและบนให้กับ label input select ใน content*/
+    margin-top: 10px;
+    margin-left: 130px;
+    margin-right: 40px;
+    
+}
+    .filter-row {
+    flex-direction: column;
+  }
+  #detail, .datepick, #dateperiod {
+    width: 90vw;
+  }
+  .hamburger {
+    display: block;
+    align-self: flex-start;
+  }
+
+  .menu-area {
+    display: none !important; /* ซ่อนไว้ก่อน */
+    flex-direction: column;
+    width: 100%;
+    background-color: #CCFBD4;
+    margin-top: 10px;
+  }
+
+  .menu-area.show ~ .search-area{
+    display: none;
+  }
+
+  .menu-area .header {
+    margin: 10px 0;
+  }
+
+  /* ปิด .exit-area เดิมใน mobile */
+  .exit-area {
+    display: none !important;
+  }
+  #search input {
+    width: 90vw; /* ✅ ยืดช่องค้นหาให้เต็มจอใน mobile */
+    margin: 10px auto;
+  }
+.search-area {
+    width: 100%;
+    justify-content: center;
+  }
+  /* ปุ่ม Logout ในเมนูแฮมเบอร์เกอร์ */
+  #Logout {
+    font-size: 28px;
+    padding: 10px;
+    margin: 0 auto;
+    background-color: #CCFBD4;
+    color: red;
+    border: none;
+    display: block;
+  }
+
+  #Logout:hover {
+    background-color: red;
+    color: white;
+    border-radius: 10px;
+  }
+}
+/* ✅ สำหรับช่วงจอ 480px - 1020px */
+@media (min-width: 480px) and (max-width: 1020px) {
+  .headbar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 10px;
+  }
+
+  .search-area {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .search-area input {
+    width: 60vw;
+    height: 25px;
+    font-size: 16px;
+    margin-left: 10px;
+  }
+  #displayname {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #02542D;
+    margin-left: 15px;
+  }
+  .menu-area {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-evenly;
+    align-items: center;
+    gap: 5px; /* ✅ ลดช่องว่างระหว่างปุ่ม */
+  }
+  a.linkanotherpage,
+  a#Static,
+  a#Logout {
+    font-size: 26px;         /* ✅ ลดขนาดตัวอักษร */
+    padding: 5px 8px;        /* ✅ ลด padding */
+    margin: 0;               /* ✅ ตัด margin */
+  }
+
+  a#Logout {
+    color: red;
+    font-size: 26px;
+    margin-right: 0;
+  }
+  .exit-area {
+    display: none !important; /* ปิดส่วนเดิมของ logout */
+  }
+  .content{/*ตัวเนื้อหาใน container*/
+    margin-top: 140px; /* ขยับลงให้พอดีกับ nav */
+}
+
+  /* ปิด hamburger */
+  .hamburger {
+    display: none;
+  }
+}

@@ -6,7 +6,7 @@ const port = 3001;
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const databasepassword = fs.readFileSync(path.join(__dirname, 'databasepassword'), 'utf8').trim();
+const databasepassword = fs.readFileSync(path.join(__dirname, 'databasepassword.env'), 'utf8').trim();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const verifyToken = require('./authMiddleware');
@@ -133,6 +133,21 @@ app.get('/api/read',(req, res)=>{
         res.json({
             msg:"Read successfully",
             plant: results
+        })
+    })
+})
+
+//สร้าง endpoint ของ api สำหรับอ่านข้อมูลทั้งหมดของ ai_results
+app.get('/api/read/results',(req, res)=>{
+    const query = "SELECT class_id, processed_time FROM ai_results";
+    connection.query(query,(err, results)=>{
+        if(err){
+            console.log("Error to read Data ",err);
+            res.status(500).json({error:"Internal Server Error"});
+        }
+        res.json({
+            msg:"Read successfully",
+            ai_result: results
         })
     })
 })

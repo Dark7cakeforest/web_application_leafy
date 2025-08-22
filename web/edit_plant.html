@@ -4,25 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Plant</title>
+    <link rel="stylesheet" href="../src/style.css">
     <link rel="icon" type="image/x-icon" href="../src/favicon.ico">
 </head>
 <body>
-    <nav class="headbar"><!--ตัวเชื่อมหน้า ปุ่มต่าง ๆ-->
-            <!--ช่องค้นหาด้านซ้าย-->
-            <div class="search-area" id="search"><input type="text" name="search" placeholder="&nbsp;&telrec;&nbsp;Searching Plant.."></input></div>
-            <!--เมนูตรงกลาง-->
-            <div class="menu-area" id="center-menu">
-                <div class="header"><a class="linkanotherpage" id="Static" onclick="" href="index.html">Static</a></div>
-                <div class="header"><a class="linkanotherpage" id="Edit" onclick="" href="edit_plant.html">Edit Plant</a></div>
-                <div class="header"><a class="linkanotherpage" id="Feedback" onclick="" href="feedback.html">Feedback</a></div>
-            </div>
-            <!--ออกจากระบบด้านขวา-->
-            <div class="exit-area" id="exit">
-                <p id="displayname"></p>
-                <a id="Logout" onclick="logout()">Logout</a>
-            </div>
-        </nav>
-    <h2>เพิ่มพืชในระบบ (ไม่มีผลต่อการประมวลผล AI)</h2>
+    <header>
+        <div id="navbar-placeholder"></div>
+            <script>
+            fetch('navbar.html')
+                .then(response => response.text())
+                .then(data => document.getElementById('navbar-placeholder').innerHTML = data);
+            </script>
+    </header>
+    <div class="container"><!--ตัวกรอบนอกพืชแต่ละชนิด-->
+        <div id="plants"><!--กล่องพืชแต่ละรายการ-->
+            <!--พืชจาก script-->
+        </div>
+    </div>
+            <button type="button" onclick="addPlantForm()" class="add-btn">เพิ่มพืช</button>
+    <script>
+        function addPlantForm() {
+            const el = document.querySelector('.addPlantForm');
+                if (!el) return;
+                el.style.display = 'block';
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    </script>
+    <div class="addPlantForm" style="display: none;">
+        <h2>เพิ่มพืชในระบบ (ไม่มีผลต่อการประมวลผล AI)</h2>
     <form action=""><!--แบบฟอร์มเพิ่มข้อมูลพืชที่ไม่ส่งผลต่อ AI-->
         <div>
             <label for="image">แนบภาพ</label>
@@ -62,26 +71,7 @@
             <button type="reset">ล้างข้อมูล</button>
         </div>
     </form>
-    <table border="1"><!--ตารางแสดงผล-->
-            <p>ในพืช 100 กรัมจะมี...</p>
-            <thead>
-                <th>พลังงาน/แร่ธาตุ</th>
-                <th>จำนวน</th>
-                <th>หน่วย</th>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>โปรตีน</td>
-                    <td>20</td>
-                    <td>กรัม</td>
-                </tr>
-                <tr>
-                    <td>คาร์โบ</td>
-                    <td>10</td>
-                    <td>กรัม</td>
-                </tr>
-            </tbody>
-        </table>
+    </div>
     <script src="script/authGuard.js"></script>
     <script src="script/loadplant.js"></script>
 </body>
