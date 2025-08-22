@@ -153,7 +153,7 @@ a#detail:active{/*เอฟเฟกต์ตอนกดปุ่มราย�
 }
 #plants{/*กล่องที่ยัดพืชแต่ละชนิด*/
     width: 80%;
-    display: inline-flex;
+    display: inline-block;
     flex-wrap: wrap;
     margin-top: 40px;
     align-items: center;
@@ -166,7 +166,6 @@ a#detail:active{/*เอฟเฟกต์ตอนกดปุ่มราย�
     margin: 35px;
     display: inline-block;
     width: 400px;
-    height: 400px;
     flex-direction: center;
     text-align: center;
     align-items: center;
@@ -175,6 +174,98 @@ a#detail:active{/*เอฟเฟกต์ตอนกดปุ่มราย�
     font-size: 35px;
     box-shadow: 1px 1px 10px;/*x y burl size*/
 }
+.stamp{/*ตัวเลขบอกอันดับ*/
+    display: grid;
+    z-index: 1;
+    width: 50px;
+    height: 50px;
+    background-color: #da1717;
+    border-radius: 50px;
+    color: #ffffff;
+    font-size: 35px;
+    margin: 0;
+}
+.edit-btn{
+    font-size: 30px;
+    margin: 0 0 10px 10px;
+    border: solid 1px #02542D;
+    background-color: #BEF885;
+    border-radius: 10px;
+    color: #02542D;
+}
+.delete-btn{
+    font-size: 30px;
+    margin: 10px 0 0 10px;
+    border: solid 1px #da1717;
+    background-color: #da1717;
+    border-radius: 10px;
+    color: #FFFFFF;
+}
+.add-btn {
+    font-size: 30px;
+    margin: 10px auto;
+    border: solid 1px #02542D;
+    background-color: #da1717;
+    border-radius: 10px;
+    color: #FFFFFF;
+    display: block;
+}
+/* ข้อความ p อธิบาย */
+.explain {
+    font-size: 35px;
+    font-weight: bold;
+    text-align: center;    /* ให้อยู่ตรงกลาง */
+    margin: 20px 0;        /* เว้นระยะด้านบน-ล่าง */
+    color: #02542D;        /* สีเขียวเข้ม */
+}
+
+/* ตาราง */
+.table {
+    border-collapse: collapse;  /* รวมเส้น border ไม่ให้ซ้อนกัน */
+    margin: 0 auto;             /* จัดกลางแนวนอน */
+    width: 50%;                 /* กำหนดความกว้าง */
+    background-color: #f9f9f9;  /* สีพื้นหลังอ่อน */
+    box-shadow: 0px 3px 8px rgba(0,0,0,0.15); /* เงา */
+}
+
+/* หัวตาราง */
+.table thead th {
+    background-color: #02542D;  /* สีเขียวเข้ม */
+    color: #fff;                /* ตัวอักษรสีขาว */
+    padding: 12px;
+    text-align: center;
+    font-size: 16px;
+}
+
+/* แถวข้อมูล */
+.table td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ddd;
+    font-size: 15px;
+}
+
+/* ทำให้เวลาชี้แถวมีสี */
+.table tbody tr:hover {
+    background-color: #e6ffe6;
+}
+
+/* ปุ่มลบ */
+.table button {
+    background-color: #da1717;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.table button:hover {
+    background-color: #a50f0f;
+}
+
 /*smartphone*/
 @media only screen and (max-width:480px){
     .headbar{/*ในส่วน nav เชื่อมไปยังหน้าต่าง ๆ*/

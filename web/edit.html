@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Plant</title>
+    <link rel="stylesheet" href="../src/style.css">
+    <link rel="stylesheet" href="../src/editform.css">
+    <link rel="icon" type="image/x-icon" href="../src/favicon.ico">
+</head>
+<body>
+    <header>
+        <div id="navbar-placeholder"></div>
+            <script>
+            fetch('navbar.html')
+                .then(response => response.text())
+                .then(data => document.getElementById('navbar-placeholder').innerHTML = data);
+            </script>
+    </header>
+    <div class="container"><!--ตัวกรอบนอกพืชแต่ละชนิด-->
+        <div class="editPlantForm">
+        <h2>หน้าแก้ไขพืช</h2>
+    <form action=""><!--แบบฟอร์มเพิ่มข้อมูลพืชที่ไม่ส่งผลต่อ AI-->
+        <div>
+            <label for="image">แก้ไขภาพ</label>
+            <input type="file" name="image" required>
+        </div>
+        <div>
+            <label for="name">ชื่อพืช</label>
+            <input type="text" name="name" placeholder="กะเพรา" required>
+        </div>
+        <div>
+            <label for="common name">ชื่อสามัญ</label>
+            <input type="text" name="common name" placeholder="Holy Basil, Sacred Basil" required>
+        </div>
+        <div>
+            <label for="scientific name">ชื่อทางวิทยาศาสตร์</label>
+            <input type="text" name="scientific name" placeholder="Ocimum tenuiflorum L. (O. sactum Linn.)">
+        </div>
+        <div>
+            <label for="family">สกุล</label>
+            <input type="text" name="family" placeholder="LABIATAE">
+        </div>
+        <div>
+            <label for="medicinal benefits">สรรพคุณทางยา</label>
+            <textarea name="medicinal benefits" placeholder="ช่วยให้ร่างกายอบอุ่น แก้หวัด ขับลม แก้ปวดท้อง ท้องเสีย ท้องขึ้น ท้องอืด ท้องเฟ้อ จุกเสียด แน่นท้อง บำรุงธาตุ แก้ลมตานซาง ขับลมในกระเพาะ  ขับเสมหะ ขับเหงื่อ ขับน้ำดี ยับยั้งการเจริญเติบโตของเชื้อโรค ช่วยย่อยไขมัน ลดระดับน้ำตาลในเลือด แก้คลื่นไส้ อาเจียน แก้ไข้เรื้อรัง และโรคธาตุพิการ เพิ่มและขับน้ำนมสำหรับสตรีหลังคลอด รักษาโรคผิวหนัง กลาก เกลื้อน หูด แก้คัดจมูก หลอดลมอักเสบ โรคทางเดินปัสสาวะ และไตอักเสบ ลดอาการตาอักเสบจากฝุ่น ช่วยต้านมะเร็ง บรรเทาภาวะวิตกกังวลหรือซึมเศร้า"></textarea>
+        </div>
+        <div>
+            <label for="nutritional benefits">สรรพคุณทางอาหาร</label>
+            <textarea name="medicinal benefits" placeholder="ใช้ประกอบอาหารได้หลากหลาย เช่น ผัดกะเพรา แกงเลียง แกงป่า แกงคั่ว แกงเขียวหวาน แกงมะเขือขื่น ผัดหมู ผัดกบ ผัดปลาไหล พล่าปลาดุก พล่ากุ้ง และมีคุณสมบัติช่วยดับกลิ่นคาวของเนื้อสัตว์ในเมนูอาหาร สามารถนำมาทอดแล้วใช้โรยหน้าช่วยเพิ่มสีสันและความอร่อยให้เมนูอื่นๆ เพิ่มกลิ่นหอมเฉพาะตัวและรสชาติเผ็ดร้อนในอาหาร  ช่วยกระตุ้นความอยากอาหารและช่วยให้ร่างกายรู้สึกกระปรี้กระเปร่า กระตุ้นการย่อยอาหาร เป็นแหล่งของสารต้านอนุมูลอิสระ ไม่มีแคลอรีสูง ใช้เพิ่มรสชาติแทนการปรุงรสด้วยเกลือหรือซอสเยอะๆ"></textarea>
+        </div>
+        <div>
+            <label for="nutritional value">คุณค่าทางโภชนาการ</label>
+                <input type="checkbox" name="texting">ใส่ข้อความ
+                <input type="checkbox" name="table">สร้างตาราง
+        </div>
+        <div>
+            <button type="submit">บันทึกข้อมูล</button>
+            <button onclick="returnBack()">ย้อนกลับ</button>
+            <script>function returnBack(){window.location.href = 'edit_plant.html'}</script>
+        </div>
+    </form>
+    </div>
+    </div>
+    <script src="script/authGuard.js"></script>
+    <script src="script/loadplant.js"></script>
+</body>
+</html>

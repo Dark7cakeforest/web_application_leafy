@@ -11,7 +11,6 @@ function loadTable() {//ฟังก์ชันตาราง
                 trHTML += '<td>'+object['id']+'</td>';
                 trHTML += '<td>'+object['title']+'</td>';
                 trHTML += '<td>'+object['body']+'</td>';
-                trHTML += '<td align="center">'+'<button onclick="deleteFeedback('+object['id']+')">ลบ</button>'+'</td>';
                 trHTML += '</tr>';
             }
             document.getElementById("test01").innerHTML = trHTML;

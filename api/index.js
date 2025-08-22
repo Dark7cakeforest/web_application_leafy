@@ -15,8 +15,16 @@ server.get('/index',(req,res)=>{//หน้าแรก (ต้องมี toke
     res.sendFile(path.join(__dirname, '../web/index.html'));
 })
 
-server.get('/static',(req,res)=>{//สถิติ (ต้องมี token ถึงเข้าได้)
+server.get('/static',(req,res)=>{//สถิติ(10อันดับ) (ต้องมี token ถึงเข้าได้)
     res.sendFile(path.join(__dirname, '../web/static.html'));
+})
+
+server.get('/list',(req,res)=>{//สถิติ(ตาราง) (ต้องมี token ถึงเข้าได้)
+    res.sendFile(path.join(__dirname, '../web/list.html'));
+})
+
+server.get('/detail',(req,res)=>{//รายละเอียด (ต้องมี token ถึงเข้าได้)
+    res.sendFile(path.join(__dirname, '../web/detail.html'));
 })
 
 server.get('/edit_plant',(req,res)=>{//ดูพืช แก้ไขพืช (ต้องมี token ถึงเข้าได้)

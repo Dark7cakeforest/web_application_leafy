@@ -1,0 +1,66 @@
+/*laptop and other*/
+* {
+  box-sizing: border-box;
+}
+body{/*พื้นหลังทั้งหมด ในส่วน body*/
+    background-color: #E8F5E9;
+    margin: 0;
+    padding: 0;
+}
+header{/*navภาพรวม*/
+    position: fixed;
+    width: 100%;
+    top: 0;
+    border-bottom: solid #02542D 2px;
+    background-color: #CCFBD4;
+}
+h1{
+    color: #02542D;
+    margin-left: 50px;
+}
+.content{/*กล่องพืชแต่ละชนิด*/
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+}
+.card{
+    width: 400px;
+    height: 500px;
+    display: inline-block;
+    padding-top: 50px;
+    margin: 40px;
+    text-align: center;
+    border: solid #02542D 2px;
+    border-radius: 5px;
+    font-size: 35px;
+    box-shadow: 1px 1px 10px;/*x y burl size*/
+}
+.card:hover { transform: scale(1.05); }
+.card img { width: 75%; border-radius: 5px; }
+.card p { font-weight: bold; margin-top: 10px; color: #02542D;}
+/* ✅ MOBILE */
+@media only screen and (max-width: 480px) {
+   .content{
+    margin-top: 100px;
+   }
+   .card:hover { transform: scale(1.05); }
+   .card img { width: 80%; border-radius: 5px; }
+   .card p { font-weight: bold; margin-top: 10px; }
+}
+/* ✅ สำหรับช่วงจอ 480px - 1020px */
+@media (min-width: 480px) and (max-width: 1020px) {
+  .headbar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 10px;
+  }
+  .content{/*ตัวเนื้อหาใน container*/
+    margin-top: 100px; /* ขยับลงให้พอดีกับ nav */
+}
+
+}
