@@ -43,8 +43,10 @@ fetch('http://localhost:3001/api/read')
       img.height = 300;
 
       const name = document.createElement("p");
+      name.className = "plant-name";
       name.textContent = plant.name;
       
+      container.dataset.name = (plant.name || "").toLowerCase();
       container.appendChild(img);
       container.appendChild(name);
 

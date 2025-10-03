@@ -13,7 +13,12 @@
             <script>
             fetch('navbar.html')
                 .then(response => response.text())
-                .then(data => document.getElementById('navbar-placeholder').innerHTML = data);
+                .then(data => {
+                    document.getElementById('navbar-placeholder').innerHTML = data;
+                    const script = document.createElement('script');
+                    script.src = 'script/filter.js';
+                    document.body.appendChild(script);
+                });
             </script>
         </nav>
     </header>
@@ -34,6 +39,7 @@
         <div id="plants"><!--กล่องพืชแต่ละรายการ-->
             <!--พืชจาก script-->
         </div>
+        <p id="status"></p><!-- สถานะการค้นหา ไว้แสดงในกรณีที่ไม่มีผลลัพธ์ -->
     </div>
         <script src="script/authGuard.js"></script>
         <script src="script/loadplant.js"></script>

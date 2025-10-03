@@ -1,5 +1,5 @@
 function loadResultTable() {//ฟังก์ชันตาราง
-    fetch('http://localhost:3001/api/read/results')
+    fetch('http://localhost:3001/api/results')
         .then((response) => response.json())
         .then((responseData) => {
             console.log('responseData', responseData);

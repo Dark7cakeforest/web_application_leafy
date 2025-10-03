@@ -138,7 +138,7 @@ app.get('/api/read',(req, res)=>{
 })
 
 //สร้าง endpoint ของ api สำหรับอ่านข้อมูลทั้งหมดของ ai_results
-app.get('/api/read/results',(req, res)=>{
+app.get('/api/ai_results',(req, res)=>{
     const query = "SELECT class_id, processed_time FROM ai_results";
     connection.query(query,(err, results)=>{
         if(err){
@@ -206,7 +206,7 @@ app.delete('/api/delete/:id',verifyToken,(req, res)=>{
 })
 
 //สร้าง endpoint ของ api สำหรับอ่านข้อมูลทั้งหมดของ feedback
-app.get('/api/read/feedback',(req, res)=>{
+app.get('/api/read_feedback',(req, res)=>{
     const query = "SELECT user_id, message, created_at FROM suggestions";
     connection.query(query,(err, results)=>{
         if(err){
@@ -221,7 +221,7 @@ app.get('/api/read/feedback',(req, res)=>{
 })
 
 //สร้าง endpoint ของ api สำหรับลบ feedback
-app.delete('/api/delete/feedback',verifyToken,(req, res)=>{
+app.delete('/api/delete_feedback',verifyToken,(req, res)=>{
     let suggestionsid = req.params.suggestions_id;
     const query = "DELETE FROM suggestions WHERE suggestions_id = ?";
     connection.query(query,[suggestionsid],(err, results)=>{

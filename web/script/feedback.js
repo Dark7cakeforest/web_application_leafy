@@ -1,5 +1,5 @@
 function loadTable() {//ฟังก์ชันตาราง
-    fetch('http://localhost:3001/api/read/feedback')
+    fetch('http://localhost:3001/api/read_feedback')
         .then((response) => response.json())
         .then((responseData) => {
             console.log('responseData', responseData);
@@ -13,7 +13,7 @@ function loadTable() {//ฟังก์ชันตาราง
                 trHTML += '<td>'+object['body']+'</td>';
                 trHTML += '</tr>';
             }
-            document.getElementById("test01").innerHTML = trHTML;
+            document.getElementById("feedback").innerHTML = trHTML;
         })
         .catch((error) => {
             console.error("Error fetching plant data:", error);
@@ -23,7 +23,7 @@ function loadTable() {//ฟังก์ชันตาราง
 loadTable();//เรียกฟังก์ชันโหลดตารางมาตอนเข้ามาในเว็บ
 
 function deleteFeedback(suggestions_id){//ลบfeedback ออก
-    fetch("http://localhost:3001/api/delete/feedback/" + suggestions_id, {
+    fetch("http://localhost:3001/api/delete_feedback/" + suggestions_id, {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json"

@@ -67,14 +67,14 @@ a.linkanotherpage{/*ปุ่มไปยังหน้าอื่น ๆ*/
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
 }
-a#Static{/*ปุ่มหน้าปัจจุบัน*/
+a#Feedback{/*ปุ่มหน้าปัจจุบัน*/
     border: solid #02542D 2px;
     background-color: #02542D;
     color: white;
     border-radius: 10px;
     text-decoration: none;
 }
-a:hover:not(#Static):not(#Logout):not(#detail){/*ปุ่มที่ไม่ใช่หน้าปัจจุบัน เว้น ปุ่มออกกับปุ่มรายละเอียด*/
+a:hover:not(#Feedback):not(#Logout):not(#detail){/*ปุ่มที่ไม่ใช่หน้าปัจจุบัน เว้น ปุ่มออกกับปุ่มรายละเอียด*/
     border: solid #02542D 2px;
     background-color: #BEF885;
     color: #1B7D1E;
