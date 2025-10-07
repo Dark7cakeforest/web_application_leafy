@@ -13,7 +13,12 @@
             <script>
             fetch('navbar.html')
                 .then(response => response.text())
-                .then(data => document.getElementById('navbar-placeholder').innerHTML = data);
+                .then(data => {
+                    document.getElementById('navbar-placeholder').innerHTML = data;
+                    const script = document.createElement('script');
+                    script.src = 'script/filter.js';
+                    document.body.appendChild(script);
+                });
             </script>
     </header>
     <div class="container"><!--ตัวกรอบนอกพืชแต่ละชนิด-->

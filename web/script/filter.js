@@ -30,7 +30,7 @@
       if (match) shown++;
     });
 
-    if (statusEl) statusEl.textContent = shown ? '' : 'ไม่พบรายการ';
+    if (statusEl) statusEl.textContent = shown ? '' : 'ไม่พบรายการที่คุณค้นหา';
   }
 
   // กรองทุกครั้งที่พิมพ์

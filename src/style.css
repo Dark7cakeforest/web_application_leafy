@@ -67,7 +67,7 @@ a.linkanotherpage{/*ปุ่มไปยังหน้าอื่น ๆ*/
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
 }
-a#Feedback{/*ปุ่มหน้าปัจจุบัน*/
+a#Feedback { /* ปุ่มหน้าปัจจุบัน */
     border: solid #02542D 2px;
     background-color: #02542D;
     color: white;
@@ -261,9 +261,17 @@ a#detail:active{/*เอฟเฟกต์ตอนกดปุ่มราย�
     cursor: pointer;
     transition: background 0.2s ease;
 }
-
+/* เอฟเฟคปุ่มลบ */
 .table button:hover {
     background-color: #a50f0f;
+}
+
+/*สถานะตอนที่ค้นหาไม่เจอ*/
+#status{
+    font-size: 20px;
+    color: #02542D;
+    margin-top: 20px;
+    text-align: center;
 }
 
 /*smartphone*/
