@@ -15,14 +15,26 @@
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById('navbar-placeholder').innerHTML = data;
-                    const script = document.createElement('script');
-                    script.src = 'script/filter.js';
-                    document.body.appendChild(script);
-                });
+                    // เรียก navbarActive หลังจากที่ navbar โหลดเสร็จ
+                    if (window.navbarActive) {
+                        window.navbarActive("Static");
+                    } else {
+                        // รอให้ navbar.js โหลดเสร็จแล้วเรียก navbarActive
+                        const script = document.createElement('script');
+                        script.src = 'script/navbar.js';
+                        script.onload = function() {
+                            window.navbarActive("Feedback");
+                        };
+                        document.body.appendChild(script);
+                    }
+                    const filterScript = document.createElement('script');
+                    filterScript.src = 'script/filter.js';
+                    document.body.appendChild(filterScript);
+                            });
             </script>
     </header>
         <div class="container">
-            <p class="explain">จำนวน Feedback ที่ส่งมาทั้งหมด 1 คน</p>
+            <p class="explain"><!--ข้อความจำนวนคนที่ส่งมาทั้งหมด--></p>
             <table border="1" class="table"><!--ตารางแสดงผลแต่ละคนที่ส่ง Feedback เข้ามา-->
                     <thead>
                         <th>ID ผู้ส่ง</th>

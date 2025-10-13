@@ -14,55 +14,77 @@
             <script>
             fetch('navbar.html')
                 .then(response => response.text())
-                .then(data => document.getElementById('navbar-placeholder').innerHTML = data);
+                .then(data => {
+                    document.getElementById('navbar-placeholder').innerHTML = data;
+                    // เรียก navbarActive หลังจากที่ navbar โหลดเสร็จ
+                    if (window.navbarActive) {
+                        window.navbarActive("Static");
+                    } else {
+                        // รอให้ navbar.js โหลดเสร็จแล้วเรียก navbarActive
+                        const script = document.createElement('script');
+                        script.src = 'script/navbar.js';
+                        script.onload = function() {
+                            window.navbarActive("Edit");
+                        };
+                        document.body.appendChild(script);
+                    }
+                    const filterScript = document.createElement('script');
+                    filterScript.src = 'script/filter.js';
+                    document.body.appendChild(filterScript);
+                            });
             </script>
     </header>
     <div class="container"><!--ตัวกรอบนอกพืชแต่ละชนิด-->
         <div class="editPlantForm">
-        <h2>หน้าแก้ไขพืช</h2>
-    <form action=""><!--แบบฟอร์มเพิ่มข้อมูลพืชที่ไม่ส่งผลต่อ AI-->
-        <div>
-            <label for="image">แก้ไขภาพ</label>
-            <input type="file" name="image" required>
-        </div>
-        <div>
+        <h2 id="addPlantTitle">หน้าแก้ไขพืช</h2>
+    <form class="add-plant-form" action=""><!--แบบฟอร์มเพิ่มข้อมูลพืชที่ไม่ส่งผลต่อ AI-->
+        <img id="imagePreview" class="file-preview" alt="ตัวอย่างรูปที่เลือก" hidden>
+        <div class="file-input-wrapper">
+                  <input id="image" type="file" name="image">
+                  <label for="image" class="file-btn">แก้ไขภาพ</label>
+                  <span class="file-name" aria-live="polite">ชื่อไฟล์ภาพเดิม</span>
+                </div>
             <label for="name">ชื่อพืช</label>
-            <input type="text" name="name" placeholder="กะเพรา" required>
-        </div>
-        <div>
+            <input type="text" name="name" class="name" placeholder="name">
             <label for="common name">ชื่อสามัญ</label>
-            <input type="text" name="common name" placeholder="Holy Basil, Sacred Basil" required>
-        </div>
-        <div>
+            <input type="text" name="common name" class="common_name" placeholder="common_name">
             <label for="scientific name">ชื่อทางวิทยาศาสตร์</label>
-            <input type="text" name="scientific name" placeholder="Ocimum tenuiflorum L. (O. sactum Linn.)">
-        </div>
-        <div>
+            <input type="text" name="scientific name" class="scientific_name" placeholder="scientific_name">
             <label for="family">สกุล</label>
-            <input type="text" name="family" placeholder="LABIATAE">
-        </div>
-        <div>
+            <input type="text" name="family" class="family" placeholder="family">
             <label for="medicinal benefits">สรรพคุณทางยา</label>
-            <textarea name="medicinal benefits" placeholder="ช่วยให้ร่างกายอบอุ่น แก้หวัด ขับลม แก้ปวดท้อง ท้องเสีย ท้องขึ้น ท้องอืด ท้องเฟ้อ จุกเสียด แน่นท้อง บำรุงธาตุ แก้ลมตานซาง ขับลมในกระเพาะ  ขับเสมหะ ขับเหงื่อ ขับน้ำดี ยับยั้งการเจริญเติบโตของเชื้อโรค ช่วยย่อยไขมัน ลดระดับน้ำตาลในเลือด แก้คลื่นไส้ อาเจียน แก้ไข้เรื้อรัง และโรคธาตุพิการ เพิ่มและขับน้ำนมสำหรับสตรีหลังคลอด รักษาโรคผิวหนัง กลาก เกลื้อน หูด แก้คัดจมูก หลอดลมอักเสบ โรคทางเดินปัสสาวะ และไตอักเสบ ลดอาการตาอักเสบจากฝุ่น ช่วยต้านมะเร็ง บรรเทาภาวะวิตกกังวลหรือซึมเศร้า"></textarea>
-        </div>
-        <div>
+            <textarea name="medicinal benefits" class="medicinal_benefits" placeholder="medicinal_benefits"></textarea>
             <label for="nutritional benefits">สรรพคุณทางอาหาร</label>
-            <textarea name="medicinal benefits" placeholder="ใช้ประกอบอาหารได้หลากหลาย เช่น ผัดกะเพรา แกงเลียง แกงป่า แกงคั่ว แกงเขียวหวาน แกงมะเขือขื่น ผัดหมู ผัดกบ ผัดปลาไหล พล่าปลาดุก พล่ากุ้ง และมีคุณสมบัติช่วยดับกลิ่นคาวของเนื้อสัตว์ในเมนูอาหาร สามารถนำมาทอดแล้วใช้โรยหน้าช่วยเพิ่มสีสันและความอร่อยให้เมนูอื่นๆ เพิ่มกลิ่นหอมเฉพาะตัวและรสชาติเผ็ดร้อนในอาหาร  ช่วยกระตุ้นความอยากอาหารและช่วยให้ร่างกายรู้สึกกระปรี้กระเปร่า กระตุ้นการย่อยอาหาร เป็นแหล่งของสารต้านอนุมูลอิสระ ไม่มีแคลอรีสูง ใช้เพิ่มรสชาติแทนการปรุงรสด้วยเกลือหรือซอสเยอะๆ"></textarea>
-        </div>
-        <div>
+            <textarea name="nutritional benefits" class="nutritional_benefits" placeholder="nutritional_benefits"></textarea>
             <label for="nutritional value">คุณค่าทางโภชนาการ</label>
-                <input type="checkbox" name="texting">ใส่ข้อความ
-                <input type="checkbox" name="table">สร้างตาราง
-        </div>
-        <div>
-            <button type="submit">บันทึกข้อมูล</button>
-            <button onclick="returnBack()">ย้อนกลับ</button>
-            <script>function returnBack(){window.location.href = 'edit_plant.html'}</script>
+                <table class="nutritional_value">
+                        <tr>
+                        <td>พลังงาน/แร่ธาตุ</td>
+                        <td>พืช1(ถ้ามีใบ)</td>
+                        <td>พืช2(ถ้ามีผล)</td>
+                        <td>หน่วย</td>
+                        <tr>
+                        <tr>
+                        <td>พลังงาน</td>
+                        <td>20</td>
+                        <td>25</td>
+                        <td>แคลลอรี่</td>
+                        <tr>
+                </table>
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="texting">เพิ่มใส่ข้อความ</label>
+                <label><input type="checkbox" name="table">เพิ่มแถวตาราง</label>
+            </div>
+            <button class="form-add-btn" type="submit">บันทึกข้อมูล</button>
+            <button class="form-delete-btn" type="reset" onclick="returnBack()">ย้อนกลับ</button>
+            <script>
+            function returnBack(){window.location.href = 'edit_plant.html'}
+            </script>
         </div>
     </form>
     </div>
     </div>
     <script src="script/authGuard.js"></script>
-    <script src="script/loadplant.js"></script>
+    <script src="script/populateEdit.js"></script>
 </body>
 </html>

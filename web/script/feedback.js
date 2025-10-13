@@ -4,6 +4,8 @@ function loadTable() {//ฟังก์ชันตาราง
         .then((responseData) => {
             console.log('responseData', responseData);
             const messagelist = responseData.plant;
+            let countPerson = document.getElementsByClassName("explain");
+            countPerson[0].innerHTML = "จำนวน Feedback ที่ส่งมาทั้งหมด " + messagelist.length + " คน"; //แสดงจำนวนคนที่ส่ง Feedback
             let trHTML = '';//กำหนดตาราง
             for (let i = 0; i < messagelist.length; i++) {
                 const object = messagelist[i];
@@ -16,7 +18,7 @@ function loadTable() {//ฟังก์ชันตาราง
             document.getElementById("feedback").innerHTML = trHTML;
         })
         .catch((error) => {
-            console.error("Error fetching plant data:", error);
+            console.error("Error fetching feedback data:", error);
         });
 }
 

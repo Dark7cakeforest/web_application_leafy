@@ -67,14 +67,14 @@ a.linkanotherpage{/*ปุ่มไปยังหน้าอื่น ๆ*/
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
 }
-a#Feedback { /* ปุ่มหน้าปัจจุบัน */
+a.active { /* ปุ่มหน้าปัจจุบัน */
     border: solid #02542D 2px;
     background-color: #02542D;
     color: white;
     border-radius: 10px;
     text-decoration: none;
 }
-a:hover:not(#Feedback):not(#Logout):not(#detail){/*ปุ่มที่ไม่ใช่หน้าปัจจุบัน เว้น ปุ่มออกกับปุ่มรายละเอียด*/
+a:hover:not(.active):not(#Logout):not(#detail){/*ปุ่มที่ไม่ใช่หน้าปัจจุบัน เว้น ปุ่มออกกับปุ่มรายละเอียด*/
     border: solid #02542D 2px;
     background-color: #BEF885;
     color: #1B7D1E;
@@ -185,6 +185,7 @@ a#detail:active{/*เอฟเฟกต์ตอนกดปุ่มราย�
     font-size: 35px;
     margin: 0;
 }
+/*ส่วนของในหน้า edit plant*/
 .edit-btn{
     font-size: 30px;
     margin: 0 0 10px 10px;
@@ -210,6 +211,203 @@ a#detail:active{/*เอฟเฟกต์ตอนกดปุ่มราย�
     color: #FFFFFF;
     display: block;
 }
+/* ชั้น overlay เต็มจอ */
+.overlay {
+  position: fixed;
+  inset: 0;                     /* top:0; right:0; bottom:0; left:0 */
+  display: none;                /* ซ่อนไว้ก่อน */
+  align-items: flex-start;      /* เริ่มจัดจากบน (แผ่นลอย) */
+  justify-content: center;
+  padding: 6vh 16px;            /* เว้นขอบด้านบน/ล่างนิดหน่อย */
+  background: rgba(0,0,0,.5);   /* ฉากหลังโปร่งดำ */
+  z-index: 9999;                /* ทับทุกอย่างให้อยู่ด้านบนสุดเสมอ */
+}
+
+/* เปิด modal */
+.overlay.show { display: flex; }
+
+/* แผ่นฉากหลัง (รับคลิกเพื่อปิด) */
+.overlay-backdrop {
+  position: absolute;
+  inset: 0;
+}
+
+/* กล่องฟอร์ม */
+.addPlantForm {
+  position: relative;
+  width: min(900px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  background: #eafcdf;
+  border-radius: 16px;
+  padding: 20px 20px 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+
+/* ปุ่มปิดมุมขวา */
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 45px;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+/* ล็อกสกอร์ลของหน้าเมื่อเปิด modal */
+body.modal-open { overflow: hidden; }
+
+#addPlantTitle{/*หัวข้อของฟอร์มเพิ่มพืช*/
+    font-size: 30px;
+    font-weight: bold;
+    text-align: center;
+    color: #02542D;
+    margin: 0 0 20px 0;
+}
+
+/* custom file input button + filename */
+.file-input-wrapper {/*div ที่ครอบ input[type=file]*/
+  position: relative;       /* anchor ให้ input[type=file] ที่ absolute */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+
+  /* ทำให้ทั้ง wrapper อยู่กึ่งกลาง แบบเดียวกับ input อื่น ๆ */
+  width: 90%;
+  max-width: 520px;
+  margin: 0.5rem auto;      /* center block */
+  text-align: center;       /* เผื่อข้อความภายใน */
+}
+.file-input-wrapper input[type="file"] {/*เลือกส่วนเฉพาะที่ต้องการ*/
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  /* ครอบเฉพาะบริเวณปุ่ม */
+  height: 100%;
+  inset: 0 auto 0 0;   /* left ติดขอบ wrapper */
+  width: 140px;        /* เท่าหรือใกล้กับความกว้างปุ่มจริง */
+}
+.file-btn {/*ปุ่มแนบไฟล์แบบแต่งเอง*/
+  position: relative;
+  padding: 0.3rem 0.5rem;
+  background: #BEF885;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 2;
+  user-select: none;
+  flex: 0 0 auto;
+  text-align: center;       /* ปุ่มอยู่กลาง */
+}
+.file-name {/*ชื่อไฟล์ที่เลือก*/
+  color: #02542D;
+  font-size: 1.8rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;       /* ชื่อไฟล์อยู่กลาง */
+}
+.file-preview {/*ภาพหลังจากเลือกไฟล์*/
+  display: block;
+  max-width: 520px;
+  width: 30%;
+  height: auto;
+  margin: 0.5rem auto 0;     /* จัดกลางเหมือน input */
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.12);
+  object-fit: contain;
+  text-align: center;
+}
+/* สไตล์ของ input แบบต่าง ๆ */
+.add-plant-form input[type="text"],
+.add-plant-form input[type="file"],
+.add-plant-form textarea,
+.add-plant-form select {
+  display: block;
+  color: #02542D;
+  font-size: 1.5rem;
+  margin: 0.5rem auto;     /* centers block-level elements */
+  width: 90%;              /* responsive ความกว้าง */
+  max-width: 520px;
+  border: solid 1px #02542D;      
+  border-radius: 7px; 
+  box-sizing: border-box;
+}
+.add-plant-form textarea {
+    text-align: left;
+    width: 100%;
+    height: 100px;
+    resize: vertical; /* ให้ปรับขนาดได้เฉพาะแนวตั้ง */
+}
+/* ทำให้ label อยู่ตรงกลาง */
+.add-plant-form label {/*ป้ายกำกับในฟอร์มเพิ่มพืช*/
+  display: block;
+  color: #02542D;
+  text-align: center;
+  font-size: 25px;
+  margin: 0.75rem auto 0.25rem;
+  max-width: 520px;
+  width: 30%;
+}
+/* ตัว checkbox*/
+.checkbox-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.1rem;
+  margin-top: 0.5rem;
+  margin-left: 2rem;
+  margin-right: 2rem;
+}
+.add-plant-form input[type="checkbox"] {
+  color: #02542D;
+  font-size: 1.2rem;
+  width: auto;
+  transform: scale(1.5);
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+/* ทำให้ปุ่มอยู่ตรงกลาง */
+.add-plant-form > div {
+  text-align: center;
+  margin-top: 0.75rem;
+}
+.add-plant-form button {
+  margin: 0 0.5rem;
+}
+/*ตกแต่งปุ่มส่งฟอร์มและล้างข้อมูลฟอร์ม*/
+.form-add-btn {
+  background-color: #02542D;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  font-size: 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.form-add-btn:hover {
+  background-color: #1B7D1E;
+}
+.form-delete-btn {
+  background-color: #da1717;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  font-size: 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.form-delete-btn:hover {
+  background-color: #a50f0f;
+}
+/*ส่วนของหน้า feedback*/
 /* ข้อความ p อธิบาย */
 .explain {
     font-size: 35px;
@@ -301,7 +499,10 @@ a#detail:active{/*เอฟเฟกต์ตอนกดปุ่มราย�
     border: 2px solid transparent;
     border-radius: 10px;
     margin: auto;
-}
+    }
+    .file-input-wrapper { gap: .5rem; }
+    .file-btn { max-width: 120px; font-size: 1rem; padding: 0.3rem 0.5rem; }
+    .file-name { max-width: 45%; font-size: .95rem; }
 }
 /*tablet*/
 @media (min-width:481px) and (max-width:1020px) {

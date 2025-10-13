@@ -1,23 +1,14 @@
-function navbarActive(presentpage, nameofpage) {
-  // Hide all elements with class="tabcontent" by default */
-  var i, tabcontent, tablinks;
-  tabcontent = document.getElementsByClassName("tabcontent");
-  for (i = 0; i < tabcontent.length; i++) {
-    tabcontent[i].style.display = "none";
+function navbarActive(presentpage) {
+  var i, linkanotherpage;
+  //เอาพื้นหลังของปุ่มที่ไม่ใช้งานออก
+  linkanotherpage = document.getElementsByClassName("linkanotherpage");
+  for (i = 0; i < linkanotherpage.length; i++) {
+    linkanotherpage[i].classList.remove("active");//ลบคลาส active (ปัจจุบัน) ออก
   }
-
-  // Remove the background color of all tablinks/buttons
-  tablinks = document.getElementsByClassName("tablink");
-  for (i = 0; i < tablinks.length; i++) {
-    tablinks[i].style.backgroundColor = "";
-  }
-
-  // Show the specific tab content
-  document.getElementById(cityName).style.display = "block";
-
-  // Add the specific color to the button used to open the tab content
-  elmnt.style.backgroundColor = color;
+  document.getElementById(presentpage).classList.add("active");//เพิ่มคลาส active (ปัจจุบัน) เข้าไป
 }
 
-// Get the element with id="defaultOpen" and click on it
-document.getElementById("defaultOpen").click(); 
+//ตั้งค่าให้หน้า Status เป็นหน้าแรกที่แสดง
+window.onload = function() {
+  navbarActive("Static");
+}
