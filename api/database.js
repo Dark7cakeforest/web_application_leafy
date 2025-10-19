@@ -10,11 +10,28 @@ const databasepassword = fs.readFileSync(path.join(__dirname, 'databasepassword.
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const verifyToken = require('./authMiddleware');
+const multer = require('multer'); // added for file uploads
+
+// ensure images folder exists
+const imagesDir = path.join(__dirname, 'images');
+if (!fs.existsSync(imagesDir)) {
+    fs.mkdirSync(imagesDir, { recursive: true });
+}
+
+// multer storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, imagesDir),
+    filename: (req, file, cb) => {
+        const unique = Date.now() + '-' + file.originalname.replace(/\s+/g, '_');
+        cb(null, unique);
+    }
+});
+const upload = multer({ storage });
 
 app.use(express.json())
 app.use(bodyParser.json())
 app.use(cors({
-  origin: ['http://localhost:5501', 'http://127.0.0.1:5501'],
+  origin: ['http://localhost:5501', 'http://127.0.0.1:5501', 'http://localhost:8000'],
   credentials: true
 }));
 app.use('/images', express.static(path.join(__dirname, 'images')));
@@ -124,7 +141,7 @@ app.post('/api/insert',verifyToken,(req, res)=>{
 
 //สร้าง endpoint ของ api สำหรับอ่านข้อมูลทั้งหมด
 app.get('/api/read',(req, res)=>{
-    const query = "SELECT image_leaf_path, name FROM vegetables";
+    const query = "SELECT plant_id, class_id, image_leaf_path, name FROM vegetables";
     connection.query(query,(err, results)=>{
         if(err){
             console.log("Error to read Data ",err);
@@ -137,20 +154,35 @@ app.get('/api/read',(req, res)=>{
     })
 })
 
-//สร้าง endpoint ของ api สำหรับอ่านข้อมูลทั้งหมดของ ai_results
-app.get('/api/read/results',(req, res)=>{
-    const query = "SELECT class_id, processed_time FROM ai_results";
-    connection.query(query,(err, results)=>{
-        if(err){
-            console.log("Error to read Data ",err);
-            res.status(500).json({error:"Internal Server Error"});
-        }
-        res.json({
-            msg:"Read successfully",
-            ai_result: results
-        })
-    })
-})
+//สร้าง endpoint ของ api สำหรับอ่านข้อมูลทั้งหมดของ ai_results และทำการคำนวณค่า ถูก/ผิด และ จำนวนคนที่ส่งข้อมูลเข้ามา
+//สรุปผลต่อ class_id + เรียงตาม conclusion มาก ไป น้อย
+app.get('/api/ai_results', (req, res) => {
+  const query = `
+    SELECT
+      ac.class_id,
+      ac.class_label,
+      COALESCE(t.conclusion, 0)            AS conclusion,
+      COALESCE(t.correct, 0)               AS correct,     -- เปอร์เซ็นต์ถูก
+      COALESCE(t.notcorrect, 0)            AS notcorrect   -- เปอร์เซ็นต์ผิด
+    FROM ai_classes ac
+    LEFT JOIN (
+      SELECT
+        ar.class_id,
+        COUNT(*) AS conclusion,
+        ROUND(100 * SUM(ar.is_correct = 1) / NULLIF(COUNT(*), 0)) AS correct,
+        ROUND(100 * SUM(ar.is_correct = 0) / NULLIF(COUNT(*), 0)) AS notcorrect
+      FROM ai_results ar
+      GROUP BY ar.class_id
+    ) t ON t.class_id = ac.class_id
+    ORDER BY conclusion DESC, ac.class_id ASC;`;
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.log("Error to read Data ", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+    res.json({ msg: "Read successfully", ai_result: results });
+  });
+});
 
 //สร้าง endpoint ของ api สำหรับอ่านข้อมูลเจาะจงพืช
 app.get('/api/read/:id',(req, res)=>{
@@ -206,8 +238,8 @@ app.delete('/api/delete/:id',verifyToken,(req, res)=>{
 })
 
 //สร้าง endpoint ของ api สำหรับอ่านข้อมูลทั้งหมดของ feedback
-app.get('/api/read/feedback',(req, res)=>{
-    const query = "SELECT user_id, message, created_at FROM suggestions";
+app.get('/api/read_feedback',(req, res)=>{
+    const query = "SELECT suggestions_id, user_id, message, created_at FROM suggestions";
     connection.query(query,(err, results)=>{
         if(err){
             console.log("Error to read Data ",err);
@@ -221,7 +253,7 @@ app.get('/api/read/feedback',(req, res)=>{
 })
 
 //สร้าง endpoint ของ api สำหรับลบ feedback
-app.delete('/api/delete/feedback',verifyToken,(req, res)=>{
+app.delete('/api/delete_feedback/:suggestions_id',verifyToken,(req, res)=>{
     let suggestionsid = req.params.suggestions_id;
     const query = "DELETE FROM suggestions WHERE suggestions_id = ?";
     connection.query(query,[suggestionsid],(err, results)=>{
@@ -235,6 +267,29 @@ app.delete('/api/delete/feedback',verifyToken,(req, res)=>{
     })
 })
 
+// สร้าง endpoint ของ api สำหรับอัปโหลดไฟล์ (requires auth)
+app.post('/api/upload', verifyToken, upload.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const imagePath = `/images/${req.file.filename}`;
+    res.json({ msg: 'Uploaded successfully', imagePath });
+});
+
+//สร้าง endpoint ของ api สำหรับการบันทึก log ของการค้นหาข้อมูลพืชจาก input ในช่อง search
+app.put('/api/log_search', verifyToken, (req, res) => {
+  let searchQuery = req.body.searchQuery;
+  const query = `INSERT INTO search_logs (user_id, search_term, search_time) VALUES (?, ?, ?)`;
+  const value = [req.user.id, searchQuery, new Date()]; // 🔧 เติม timestamp
+  connection.query(query, value, (err, results) => {
+    if (err) {
+      console.log("Error to input log data ", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+    res.json({ msg: "Save log successfully", affectedRows: results.affectedRows });
+  });
+});
+
 app.listen(port,()=>{
     console.log(`Server running in port: ${port}`);
-})
+});

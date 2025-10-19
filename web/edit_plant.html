@@ -13,7 +13,24 @@
             <script>
             fetch('navbar.html')
                 .then(response => response.text())
-                .then(data => document.getElementById('navbar-placeholder').innerHTML = data);
+                .then(data => {
+                    document.getElementById('navbar-placeholder').innerHTML = data;
+                    // เรียก navbarActive หลังจากที่ navbar โหลดเสร็จ
+                    if (window.navbarActive) {
+                        window.navbarActive("Static");
+                    } else {
+                        // รอให้ navbar.js โหลดเสร็จแล้วเรียก navbarActive
+                        const script = document.createElement('script');
+                        script.src = 'script/navbar.js';
+                        script.onload = function() {
+                            window.navbarActive("Edit");
+                        };
+                        document.body.appendChild(script);
+                    }
+                    const filterScript = document.createElement('script');
+                    filterScript.src = 'script/filter.js';
+                    document.body.appendChild(filterScript);
+                            });
             </script>
     </header>
     <div class="container"><!--ตัวกรอบนอกพืชแต่ละชนิด-->
@@ -21,58 +38,124 @@
             <!--พืชจาก script-->
         </div>
     </div>
-            <button type="button" onclick="addPlantForm()" class="add-btn">เพิ่มพืช</button>
+            <button type="button" onclick="openAddPlant()" class="add-btn">เพิ่มพืช</button>
     <script>
-        function addPlantForm() {
-            const el = document.querySelector('.addPlantForm');
-                if (!el) return;
-                el.style.display = 'block';
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        function openAddPlant() {
+            const overlay = document.getElementById('addPlantOverlay');
+            overlay.classList.add('show');
+            overlay.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+
+            // โฟกัสช่องแรก
+            const firstFocusable = overlay.querySelector('input, textarea, select, button');
+            if (firstFocusable) firstFocusable.focus();
+
+            // ปิดด้วย Esc
+            document.addEventListener('keydown', escToClose);
         }
+
+        function closeAddPlant() {
+            const overlay = document.getElementById('addPlantOverlay');
+            overlay.classList.remove('show');
+            overlay.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            document.removeEventListener('keydown', escToClose);
+        }
+
+        function escToClose(e) {
+            if (e.key === 'Escape') closeAddPlant();
+        }
+
+        // คลิกฉากหลังหรือปุ่ม X เพื่อปิด
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('[data-dismiss]')) {
+            closeAddPlant();
+            }
+        });
+
+        // อัปเดตชื่อไฟล์ + แสดงพรีวิว (guarded)
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('image');
+            const nameSpan = document.querySelector('.file-input-wrapper .file-name');
+            const previewImg = document.getElementById('imagePreview');
+            let objectUrl; // ไว้ revoke URL เดิม
+
+            if (!input) return;
+
+            input.addEventListener('change', () => {
+            const f = input.files && input.files[0];
+
+            // อัปเดตชื่อไฟล์
+            if (nameSpan) nameSpan.textContent = f ? f.name : 'ยังไม่ได้เลือกไฟล์';
+
+            // แสดงรูปตัวอย่าง (เฉพาะไฟล์ภาพ)
+            if (f && f.type.startsWith('image/')) {
+                if (objectUrl) URL.revokeObjectURL(objectUrl);  // ล้างของเก่า
+                objectUrl = URL.createObjectURL(f);
+
+                if (previewImg) {
+                previewImg.src = objectUrl;
+                previewImg.hidden = false;
+                }
+            } else {
+                // ไม่ใช่รูปภาพ หรือไม่ได้เลือกไฟล์ -> ซ่อนพรีวิว
+                if (previewImg) {
+                previewImg.hidden = true;
+                previewImg.removeAttribute('src');
+                }
+                if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+                objectUrl = null;
+                }
+            }
+            });
+        });
     </script>
-    <div class="addPlantForm" style="display: none;">
-        <h2>เพิ่มพืชในระบบ (ไม่มีผลต่อการประมวลผล AI)</h2>
-    <form action=""><!--แบบฟอร์มเพิ่มข้อมูลพืชที่ไม่ส่งผลต่อ AI-->
-        <div>
-            <label for="image">แนบภาพ</label>
-            <input type="file" name="image" required>
+    <!-- Overlay -->
+    <div id="addPlantOverlay" class="overlay" aria-hidden="true">
+        <div class="overlay-backdrop" data-dismiss></div>
+
+        <!-- กล่องฟอร์ม -->
+        <div class="addPlantForm" role="dialog" aria-modal="true" aria-labelledby="addPlantTitle">
+            <button class="modal-close" type="button" aria-label="ปิด" data-dismiss>×</button>
+
+            <h2 id="addPlantTitle">เพิ่มพืชในระบบ (ไม่มีผลต่อการประมวลผล AI)</h2>
+            <form class="add-plant-form" action="">
+                <!-- รูปตัวอย่าง -->
+                <img id="imagePreview" class="file-preview" alt="ตัวอย่างรูปที่เลือก" hidden>
+                <!-- replaced: wrap file input, label and filename -->
+                <div class="file-input-wrapper">
+                  <input id="image" type="file" name="image" required>
+                  <label for="image" class="file-btn">แนบภาพ (เลือกไฟล์)</label>
+                  <span class="file-name" aria-live="polite">ยังไม่ได้เลือกไฟล์</span>
+                </div>
+
+                <label for="name">ชื่อพืช</label>
+                <input id="name" type="text" name="name" required>
+                <label for="common_name">ชื่อสามัญ</label>
+                <input id="common_name" type="text" name="common_name" required>
+                <label for="scientific_name">ชื่อทางวิทยาศาสตร์</label>
+                <input id="scientific_name" type="text" name="scientific_name">
+                <label for="family">สกุล</label>
+                <input id="family" type="text" name="family">
+                <label for="medicinal_benefits">สรรพคุณทางยา</label>
+                <textarea id="medicinal_benefits" name="medicinal_benefits"></textarea>
+                <label for="nutritional_benefits">สรรพคุณทางอาหาร</label>
+                <textarea id="nutritional_benefits" name="nutritional_benefits"></textarea>
+                <label>คุณค่าทางโภชนาการ</label>
+                <div class="checkbox-group">
+                <label><input type="checkbox" class="custom-checkbox" name="nutritional_text">ใส่ข้อความ</label>
+                <label><input type="checkbox" name="nutritional_table">สร้างตาราง</label>
+                </div>
+            <div>
+                <button class="form-add-btn" type="submit">บันทึกข้อมูล</button>
+                <button class="form-delete-btn" type="reset">ล้างข้อมูล</button>
+            </div>
+            </form>
         </div>
-        <div>
-            <label for="name">ชื่อพืช</label>
-            <input type="text" name="name" required>
-        </div>
-        <div>
-            <label for="common name">ชื่อสามัญ</label>
-            <input type="text" name="common name" required>
-        </div>
-        <div>
-            <label for="scientific name">ชื่อทางวิทยาศาสตร์</label>
-            <input type="text" name="scientific name">
-        </div>
-        <div>
-            <label for="family">สกุล</label>
-            <input type="text" name="family">
-        </div>
-        <div>
-            <label for="medicinal benefits">สรรพคุณทางยา</label>
-            <textarea name="medicinal benefits" id=""></textarea>
-        </div>
-        <div>
-            <label for="nutritional benefits">สรรพคุณทางอาหาร</label>
-            <textarea name="medicinal benefits" id=""></textarea>
-        </div>
-        <div>
-            <label for="nutritional value">คุณค่าทางโภชนาการ</label>
-                <input type="checkbox" name="texting">ใส่ข้อความ
-                <input type="checkbox" name="table">สร้างตาราง
-        </div>
-        <div>
-            <button type="submit">บันทึกข้อมูล</button>
-            <button type="reset">ล้างข้อมูล</button>
-        </div>
-    </form>
     </div>
     <script src="script/authGuard.js"></script>
     <script src="script/loadplant.js"></script>
+    <script src="script/addPlant.js"></script>
 </body>
 </html>
