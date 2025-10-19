@@ -36,55 +36,44 @@
     </header>
     <div class="container"><!--ตัวกรอบนอกพืชแต่ละชนิด-->
         <div class="editPlantForm">
-        <h2 id="addPlantTitle">หน้าแก้ไขพืช</h2>
-    <form class="add-plant-form" action=""><!--แบบฟอร์มเพิ่มข้อมูลพืชที่ไม่ส่งผลต่อ AI-->
-        <img id="imagePreview" class="file-preview" alt="ตัวอย่างรูปที่เลือก" hidden>
-        <div class="file-input-wrapper">
+            <!-- Edit form (reuse same class as add form so addPlant.js can attach) -->
+            <form class="add-plant-form" action="" autocomplete="off">
+                <!-- Image preview -->
+                <img id="imagePreview" class="file-preview" alt="ตัวอย่างรูปที่เลือก" hidden>
+
+                <div class="file-input-wrapper">
                   <input id="image" type="file" name="image">
-                  <label for="image" class="file-btn">แก้ไขภาพ</label>
-                  <span class="file-name" aria-live="polite">ชื่อไฟล์ภาพเดิม</span>
+                  <label for="image" class="file-btn">แนบภาพ (เลือกไฟล์)</label>
+                  <span class="file-name" aria-live="polite">ยังไม่ได้เลือกไฟล์</span>
                 </div>
-            <label for="name">ชื่อพืช</label>
-            <input type="text" name="name" class="name" placeholder="name">
-            <label for="common name">ชื่อสามัญ</label>
-            <input type="text" name="common name" class="common_name" placeholder="common_name">
-            <label for="scientific name">ชื่อทางวิทยาศาสตร์</label>
-            <input type="text" name="scientific name" class="scientific_name" placeholder="scientific_name">
-            <label for="family">สกุล</label>
-            <input type="text" name="family" class="family" placeholder="family">
-            <label for="medicinal benefits">สรรพคุณทางยา</label>
-            <textarea name="medicinal benefits" class="medicinal_benefits" placeholder="medicinal_benefits"></textarea>
-            <label for="nutritional benefits">สรรพคุณทางอาหาร</label>
-            <textarea name="nutritional benefits" class="nutritional_benefits" placeholder="nutritional_benefits"></textarea>
-            <label for="nutritional value">คุณค่าทางโภชนาการ</label>
-                <table class="nutritional_value">
-                        <tr>
-                        <td>พลังงาน/แร่ธาตุ</td>
-                        <td>พืช1(ถ้ามีใบ)</td>
-                        <td>พืช2(ถ้ามีผล)</td>
-                        <td>หน่วย</td>
-                        <tr>
-                        <tr>
-                        <td>พลังงาน</td>
-                        <td>20</td>
-                        <td>25</td>
-                        <td>แคลลอรี่</td>
-                        <tr>
-                </table>
-            <div class="checkbox-group">
-                <label><input type="checkbox" name="texting">เพิ่มใส่ข้อความ</label>
-                <label><input type="checkbox" name="table">เพิ่มแถวตาราง</label>
-            </div>
-            <button class="form-add-btn" type="submit">บันทึกข้อมูล</button>
-            <button class="form-delete-btn" type="reset" onclick="returnBack()">ย้อนกลับ</button>
-            <script>
-            function returnBack(){window.location.href = 'edit_plant.html'}
-            </script>
+
+                <label for="name">ชื่อพืช</label>
+                <input id="name" class="name" type="text" name="name" required>
+                <label for="common_name">ชื่อสามัญ</label>
+                <input id="common_name" class="common_name" type="text" name="common_name" required>
+                <label for="scientific_name">ชื่อทางวิทยาศาสตร์</label>
+                <input id="scientific_name" class="scientific_name" type="text" name="scientific_name">
+                <label for="family">สกุล</label>
+                <input id="family" class="family" type="text" name="family">
+                <label for="medicinal_benefits">สรรพคุณทางยา</label>
+                <textarea id="medicinal_benefits" class="medicinal_benefits" name="medicinal_benefits"></textarea>
+                <label for="nutritional_benefits">สรรพคุณทางอาหาร</label>
+                <textarea id="nutritional_benefits" class="nutritional_benefits" name="nutritional_benefits"></textarea>
+
+                <!-- existing nutritional display (populateEdit.js will fill this table) -->
+                <label>คุณค่าทางโภชนาการ</label>
+                <table class="nutritional_value"></table>
+
+                <div>
+                    <button class="form-add-btn" type="submit">บันทึกข้อมูล</button>
+                    <button class="form-delete-btn" type="reset">ล้างข้อมูล</button>
+                </div>
+            </form>
         </div>
-    </form>
-    </div>
     </div>
     <script src="script/authGuard.js"></script>
     <script src="script/populateEdit.js"></script>
+    <!-- include addPlant handler so edit form uses the same submit logic as add -->
+    <script src="script/addPlant.js"></script>
 </body>
 </html>

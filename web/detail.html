@@ -10,6 +10,11 @@
     .card img { width: 250px; border-radius: 5px; }
     .info { text-align: left; margin-top: 20px; }
     .back-btn { margin-top: 20px; display: inline-block; padding: 10px 15px; background: #02542D; color: white; text-decoration: none; border-radius: 5px; }
+    .edit-box { margin-top: 12px; padding: 10px; background: #e0f2f1; border-radius: 6px; display: none; }
+    .btn { cursor: pointer; padding: 8px 12px; border-radius: 6px; border: 0; }
+    .btn-edit { background: #0277bd; color: #fff; }
+    .btn-save { background: #2e7d32; color: #fff; }
+    .btn-cancel { background: #9e9e9e; color: #fff; margin-left: 6px; }
   </style>
 </head>
 <body>
@@ -17,11 +22,25 @@
 <div class="container">
   <h2 id="title">รายละเอียดพืช</h2>
   <div class="card">
-    <img id="plant-img" src="../src/images/kaprao.jpg" alt="">
+    <img id="plant-img" src="" alt="upload image">
     <div class="info">
-      <p><b>วันที่:</b> 26/07/2568 &nbsp;<b>เวลา:</b> 3:20 น.</p>
-      <p><b>การประเมิน:</b> ถูกต้อง</p>
-      <p><b>ผลการให้คะแนน:</b> <input type="text" placeholder="ถูกต้อง"></p>
+      <p><b>วันที่:</b> <span id="dateText">-</span> &nbsp;<b>เวลา:</b> <span id="timeText">-</span></p>
+      <p><b>ผลลัพธ์การทำนายของโมเดล:</b> <span id="confText">-</span></p>
+      <p><b>ผลการให้คะแนนจากผู้ใช้งาน:</b> <span id="scoreText">-</span></p>
+
+      <div>
+        <button id="editBtn" class="btn btn-edit">แก้ไขผลการให้คะแนน</button>
+      </div>
+
+      <div id="editBox" class="edit-box">
+        <label><input type="radio" name="iscorrect" value="1"> ถูกต้อง</label>
+        &nbsp;&nbsp;
+        <label><input type="radio" name="iscorrect" value="0"> ผิด</label>
+        <div style="margin-top:8px">
+          <button id="saveBtn" class="btn btn-save">ยืนยันการแก้ไข</button>
+          <button id="cancelBtn" class="btn btn-cancel">ยกเลิก</button>
+        </div>
+      </div>
     </div>
   </div>
   <br>
@@ -30,7 +49,80 @@
 
 <script>
   const params = new URLSearchParams(window.location.search);
-  const plantId = params.get("id");
+  const resultId = params.get("result_id");
+
+  if (!resultId) {
+    alert('ไม่พบ result_id');
+  } else {
+    fetch(`http://localhost:3001/api/result_detail?result_id=${resultId}`)
+      .then(r => r.json())
+      .then(d => {
+        const r = d.result;
+        document.getElementById('title').textContent = r.class_label || 'รายละเอียดพืช';
+        const img = document.getElementById('plant-img');
+        img.src = r.image_path ? r.image_path : '../src/images/kaprao.jpg'; // fallback
+
+        // แยกวันที่/เวลา
+        const dt = (r.processed_time || '').split(' ');
+        document.getElementById('dateText').textContent = dt[0] || '-';
+        document.getElementById('timeText').textContent = dt[1] || '-';
+
+        // confidence → %
+        const conf = Number(r.confidence_score);
+        const pct = isNaN(conf) ? '-' : (conf <= 1 ? (conf*100).toFixed(0)+'%' : conf.toFixed(0)+'%');
+        document.getElementById('confText').textContent = pct;
+
+        // is_correct
+        let scoreStr = 'ผู้ใช้ยังไม่ให้คะแนน';
+        if (r.is_correct === 1) scoreStr = 'ถูกต้อง';
+        else if (r.is_correct === 0) scoreStr = 'ผิด';
+        document.getElementById('scoreText').textContent = scoreStr;
+
+        // เตรียมค่า default radio
+        const radios = document.querySelectorAll('input[name="iscorrect"]');
+        radios.forEach(rd => {
+          if (String(r.is_correct) === rd.value) rd.checked = true;
+        });
+
+        // ปุ่มแก้ไข/ยกเลิก/บันทึก
+        const box = document.getElementById('editBox');
+        document.getElementById('editBtn').onclick = () => box.style.display = 'block';
+        document.getElementById('cancelBtn').onclick = () => box.style.display = 'none';
+          document.getElementById('saveBtn').onclick = async () => {
+            const sel = document.querySelector('input[name="iscorrect"]:checked');
+            if (!sel) { alert('กรุณาเลือก ค่าความถูกต้อง หรือ ผิด'); return; }
+            const val = Number(sel.value);
+            try {
+              const token = localStorage.getItem('jwt') || localStorage.getItem('token') || localStorage.getItem('accessToken');
+              const res = await fetch(`http://localhost:3001/api/result_feedback/${resultId}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+                },
+                body: JSON.stringify({ is_correct: val })
+              });
+
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || err.msg || 'Save failed');
+              }
+              await res.json();
+              alert('บันทึกข้อมูลสำเร็จ');
+              // อัพเดทหน้าจอให้แสดงค่าที่แก้ไข
+              document.getElementById('scoreText').textContent = (val === 1 ? 'ถูกต้อง' : 'ผิด');
+              box.style.display = 'none';
+            } catch (err) {
+              console.error(err);
+              alert('Save failed: ' + err.message);
+            }
+          };
+      })
+      .catch(err => {
+        console.error(err);
+        alert('ไม่พบข้อมูลรายละเอียด');
+      });
+  }
 </script>
 
 </body>

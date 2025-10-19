@@ -120,14 +120,14 @@ a#Logout{/*ปุ่มออกจากระบบ*/
     align-items: center;
     justify-content: center;
 }
-label.des,input.datepick,select#dateperiod,a#detail{/*เว้นซ้ายและบนให้กับ label input select ใน content*/
+label.des,input.datepick,select#dateperiod,input.datepick2,a#detail{/*เว้นซ้ายและบนให้กับ label input select ใน content*/
     margin-top: 10px;
     margin-left: 10px;
 }
-.datepick{/*ปุ่มเลือกวันที่ ปฏิทิน*/
+.datepick,.datepick2{/*ปุ่มเลือกวันที่ ปฏิทิน*/
     width: 10vw;
 }
-select#dateperiod,.datepick{/*ปุ่มเลือกช่วงเวลา*/
+select#dateperiod,.datepick,.datepick2{/*ปุ่มเลือกช่วงเวลา*/
     height: 40px;
     font-size: 25px;
     color: #02542D;

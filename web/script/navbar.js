@@ -1,6 +1,6 @@
 function navbarActive(presentpage) {
   var i, linkanotherpage;
-  //เอาพื้นหลังของปุ่มที่ไม่ใช้งานออก
+  //เอาพื้นหลังของปุ่มที่ไม่ใช้งานออก(สำหรับเปลี่ยนcss)
   linkanotherpage = document.getElementsByClassName("linkanotherpage");
   for (i = 0; i < linkanotherpage.length; i++) {
     linkanotherpage[i].classList.remove("active");//ลบคลาส active (ปัจจุบัน) ออก
