@@ -1,6 +1,7 @@
+const { setupModelRoutes } = require('./model.js');
 const bodyParser = require('body-parser');
 const express = require('express');
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 const app = express();
 const port = 3001;
 const cors = require('cors');
@@ -13,9 +14,10 @@ const verifyToken = require('./authMiddleware');
 const multer = require('multer'); // added for file uploads
 
 // ensure images folder exists
-const imagesDir = path.join(__dirname, 'images');
+// store uploaded images in ../src/images so they become part of the web static assets
+const imagesDir = path.join(__dirname, '..', 'src', 'images');
 if (!fs.existsSync(imagesDir)) {
-    fs.mkdirSync(imagesDir, { recursive: true });
+  fs.mkdirSync(imagesDir, { recursive: true });
 }
 
 // multer storage
@@ -28,28 +30,57 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-app.use(express.json())
-app.use(bodyParser.json())
+// ===== สร้างเงื่อนไขช่วงวันที่จาก query =====
+function buildDateRangeWhere(alias, q) {
+  const a = alias || 'ar';
+  const { date, start, end } = q || {};
+  let where = '';
+  let params = [];
+
+  // เทียบเฉพาะ 'วัน' ด้วย DATE()
+  if (date && !start && !end) {
+    where = `WHERE DATE(${a}.processed_time) = ?`;
+    params.push(date);
+  } else if (start || end) {
+    // สลับถ้า end < start
+    let s = start || end;
+    let e = end || start;
+    if (s && e && new Date(e) < new Date(s)) {
+      const tmp = s; s = e; e = tmp;
+    }
+    if (s && e) {
+      where = `WHERE DATE(${a}.processed_time) BETWEEN ? AND ?`;
+      params.push(s, e);
+    } else if (s && !e) {
+      where = `WHERE DATE(${a}.processed_time) >= ?`;
+      params.push(s);
+    } else if (!s && e) {
+      where = `WHERE DATE(${a}.processed_time) <= ?`;
+      params.push(e);
+    }
+  }
+  return { where, params };
+}
+
+app.use(express.json());
+app.use(bodyParser.json());
 app.use(cors({
-  origin: ['http://localhost:5501', 'http://127.0.0.1:5501', 'http://localhost:8000'],
+  origin: ['http://localhost:5501', 'http://127.0.0.1:5501', 'http://localhost:8000', 'http://192.168.1.33:8081'],
   credentials: true
 }));
-app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/images', express.static(imagesDir));//หน้า images ให้เป็น static folder
 
-const connection = mysql.createConnection({//สร้างตัวเชื่อมฐานข้อมูล
+const connection = mysql.createPool({//สร้างตัวเชื่อมฐานข้อมูล
     host: "localhost",
     user: "root",
     password: databasepassword,
-    database: "app_database"
+    database: "app_database",
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
-connection.connect((err)=>{//เชื่อมต่อฐานข้อมูล
-    if(err){
-        console.error("Error connecting to MySQL",err);
-        return;
-    }
-    console.log("Connected to MySQL Successfully.");
-})
+console.log("Connected to MySQL Successfully.");
 
 //สร้าง endpoint ของ api สำหรับตรวจสอบการเข้าสู่ระบบ
 app.post('/api/login', (req, res) => {
@@ -121,6 +152,44 @@ app.post('/api/insertadmin',verifyToken,async (req, res)=>{
     }
 })
 
+//สร้าง endpoint ของ api สำหรับเพิ่มข้อมูลผู้ใช้งานทั่วไป (แบบ guest)
+app.post('/api/create_user',async (req, res)=>{
+    try {
+        const query = "INSERT INTO users (user_id, is_guest) VALUES ( ? , true)";
+        const userId = 'guest_' + Math.floor(Math.random() * 1000);
+        const value = [userId];
+        connection.query(query, value, (err, results) => {
+            if (err) {
+                console.log("Error to insert user data", err);
+                return res.status(500).json({ error: "Internal Server Error" });
+            }
+
+            res.json({
+                msg: "Inserted guest successfully",
+                insertedId: results.insertId
+            });
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Hashing error" });
+    }
+})
+
+//สร้าง endpoint ของ api สำหรับการรับข้อเสนอแนะจากผู้ใช้งาน
+app.post('/api/suggestions', async (req, res) => {
+    const { userId, message } = req.body;
+    if (!message || !userId) {
+        return res.status(400).json({ error: "userId and message are required" });
+    }
+    try {
+        const query = `INSERT INTO suggestions (user_id, message, created_at) VALUES (?, ?, NOW())`;
+        const [results] = await connection.query(query, [userId, message]);
+        res.json({ msg: "Save suggestions successfully", affectedRows: results.affectedRows });
+    } catch (err) {
+        console.log("Error to input suggestions ", err);
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
 //สร้าง endpoint ของ api สำหรับเพิ่มข้อมูลพืช
 app.post('/api/insert',verifyToken,(req, res)=>{
     const {image_leaf_path, name, common_name, scientific_name, family, medicinal_benefits, nutritional_benefits, nutritional_value} = req.body;
@@ -156,14 +225,17 @@ app.get('/api/read',(req, res)=>{
 
 //สร้าง endpoint ของ api สำหรับอ่านข้อมูลทั้งหมดของ ai_results และทำการคำนวณค่า ถูก/ผิด และ จำนวนคนที่ส่งข้อมูลเข้ามา
 //สรุปผลต่อ class_id + เรียงตาม conclusion มาก ไป น้อย
+// ===== [UPDATE] รองรับ ?date=YYYY-MM-DD หรือ ?start=YYYY-MM-DD&end=YYYY-MM-DD ====
 app.get('/api/ai_results', (req, res) => {
+  const { where, params } = buildDateRangeWhere('ar', req.query);
+
   const query = `
     SELECT
       ac.class_id,
       ac.class_label,
-      COALESCE(t.conclusion, 0)            AS conclusion,
-      COALESCE(t.correct, 0)               AS correct,     -- เปอร์เซ็นต์ถูก
-      COALESCE(t.notcorrect, 0)            AS notcorrect   -- เปอร์เซ็นต์ผิด
+      COALESCE(t.conclusion, 0)  AS conclusion,
+      COALESCE(t.correct, 0)     AS correct,
+      COALESCE(t.notcorrect, 0)  AS notcorrect
     FROM ai_classes ac
     LEFT JOIN (
       SELECT
@@ -172,10 +244,13 @@ app.get('/api/ai_results', (req, res) => {
         ROUND(100 * SUM(ar.is_correct = 1) / NULLIF(COUNT(*), 0)) AS correct,
         ROUND(100 * SUM(ar.is_correct = 0) / NULLIF(COUNT(*), 0)) AS notcorrect
       FROM ai_results ar
+      ${where}
       GROUP BY ar.class_id
     ) t ON t.class_id = ac.class_id
-    ORDER BY conclusion DESC, ac.class_id ASC;`;
-  connection.query(query, (err, results) => {
+    ORDER BY conclusion DESC, ac.class_id ASC;
+  `;
+
+  connection.query(query, params, (err, results) => {
     if (err) {
       console.log("Error to read Data ", err);
       return res.status(500).json({ error: "Internal Server Error" });
@@ -238,7 +313,7 @@ app.delete('/api/delete/:id',verifyToken,(req, res)=>{
 })
 
 //สร้าง endpoint ของ api สำหรับอ่านข้อมูลทั้งหมดของ feedback
-app.get('/api/read_feedback',(req, res)=>{
+app.get('/api/read_feedback',verifyToken,(req, res)=>{
     const query = "SELECT suggestions_id, user_id, message, created_at FROM suggestions";
     connection.query(query,(err, results)=>{
         if(err){
@@ -272,12 +347,23 @@ app.post('/api/upload', verifyToken, upload.single('image'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
-    const imagePath = `/images/${req.file.filename}`;
-    res.json({ msg: 'Uploaded successfully', imagePath });
+  // return the public URL that clients can use to load the image
+  const imagePath = `../src/images/${req.file.filename}`;
+  res.json({ msg: 'Uploaded successfully', imagePath });
+});
+
+// สร้าง endpoint ของ api สำหรับอัปโหลดไฟล์ สำหรับ guest (no auth)
+app.post('/api/guest_upload', upload.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+  // return the public URL that clients can use to load the image
+  const imagePath = `../src/images/${req.file.filename}`;
+  res.json({ msg: 'Uploaded successfully', imagePath });
 });
 
 //สร้าง endpoint ของ api สำหรับการบันทึก log ของการค้นหาข้อมูลพืชจาก input ในช่อง search
-app.put('/api/log_search', verifyToken, (req, res) => {
+app.put('/api/log_search', (req, res) => {
   let searchQuery = req.body.searchQuery;
   const query = `INSERT INTO search_logs (user_id, search_term, search_time) VALUES (?, ?, ?)`;
   const value = [req.user.id, searchQuery, new Date()]; // 🔧 เติม timestamp
@@ -290,6 +376,91 @@ app.put('/api/log_search', verifyToken, (req, res) => {
   });
 });
 
-app.listen(port,()=>{
+// ===== [ADD] /api/results สำหรับ list.html (แสดงทุกแถวของผลลัพธ์ + label) =====
+// รองรับพารามิเตอร์วันเดียว/ช่วงวัน เช่นเดียวกับ /api/ai_results
+app.get('/api/results', (req, res) => {
+  const { where, params } = buildDateRangeWhere('ar', req.query);
+  const sql = `
+    SELECT 
+      ar.result_id,
+      ar.upload_id,
+      ar.class_id,
+      ac.class_label,
+      ar.confidence_score,
+      ar.processed_time,
+      ar.is_correct
+    FROM ai_results ar
+    JOIN ai_classes ac ON ac.class_id = ar.class_id
+    ${where}
+    ORDER BY ar.processed_time DESC, ar.result_id DESC
+  `;
+  connection.query(sql, params, (err, rows) => {
+    if (err) {
+      console.error('Error /api/results', err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+    res.json({ msg: "Read successfully", ai_result: rows });
+  });
+});
+
+// ===== [ADD] รายละเอียดของผลลัพธ์เดียว สำหรับหน้า detail.html =====
+app.get('/api/result_detail', (req, res) => {
+  const { result_id } = req.query;
+  if (!result_id) return res.status(400).json({ error: "result_id is required" });
+
+  const sql = `
+    SELECT 
+      ar.result_id,
+      ar.upload_id,
+      ar.class_id,
+      ac.class_label,
+      ar.confidence_score,
+      ar.processed_time,
+      ar.is_correct,
+      ar.feedback_time,
+      up.image_path
+    FROM ai_results ar
+    JOIN ai_classes ac ON ac.class_id = ar.class_id
+    LEFT JOIN upload_photos up ON up.upload_id = ar.upload_id
+    WHERE ar.result_id = ? 
+    LIMIT 1
+  `;
+  connection.query(sql, [result_id], (err, rows) => {
+    if (err) {
+      console.error('Error /api/result_detail', err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+    if (!rows.length) return res.status(404).json({ error: "Result not found" });
+    res.json({ msg: "Read successfully", result: rows[0] });
+  });
+});
+
+// ===== [ADD] อัปเดต is_correct + feedback_time (ต้องการสิทธิ์) =====
+app.put('/api/result_feedback/:result_id', verifyToken, (req, res) => {
+  const { result_id } = req.params;
+  const { is_correct } = req.body; // ควรเป็น 0 หรือ 1
+
+  if (is_correct !== 0 && is_correct !== 1) {
+    return res.status(400).json({ error: "is_correct must be 0 or 1" });
+  }
+
+  const sql = `
+    UPDATE ai_results 
+    SET is_correct = ?, feedback_time = NOW()
+    WHERE result_id = ?
+  `;
+  connection.query(sql, [is_correct, result_id], (err, r) => {
+    if (err) {
+      console.error('Error update feedback', err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+    res.json({ msg: "Updated feedback successfully", affectedRows: r.affectedRows });
+  });
+});
+
+setupModelRoutes(app, connection, upload);
+console.log("Model routes have been set up.");
+
+app.listen(port, () => {
     console.log(`Server running in port: ${port}`);
 });
