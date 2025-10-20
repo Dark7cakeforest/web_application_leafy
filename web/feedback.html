@@ -37,7 +37,7 @@
             <p class="explain"><!--ข้อความจำนวนคนที่ส่งมาทั้งหมด--></p>
             <table border="1" class="table"><!--ตารางแสดงผลแต่ละคนที่ส่ง Feedback เข้ามา-->
                     <thead>
-                        <th>ID ผู้ส่ง</th>
+                        <th>ลำดับที่</th>
                         <th>ข้อความ</th>
                         <th>สร้างเมื่อ</th>
                         <th>จัดการข้อมูล</th>
@@ -47,7 +47,9 @@
                     </tbody>
             </table>
         </div>
-    <script src="script/authGuard.js"></script>
-    <script src="script/feedback.js"></script>
+        <!-- SweetAlert2 (provides Swal) -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="script/authGuard.js"></script>
+        <script src="script/feedback.js"></script>
 </body>
 </html>

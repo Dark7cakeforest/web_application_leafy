@@ -31,13 +31,12 @@ function renderRows(tbodyId, rows) {// แสดงผลลัพธ์ลง�
 // โหมด "ทั้งหมด"
 function loadAllTable() {
   const qs = getDateParams();
-  const url = 'http://localhost:3001/api/results' + (qs ? ('?' + qs) : '');
+  const url = '/api/results' + (qs ? ('?' + qs) : '');
   fetch(url)
     .then(r => r.json())
     .then(data => {
       const list = data.ai_result || [];
       renderRows('queryAllResult', list);
-      // ถ้าอยากให้ส่วน perPlant mirror ด้วยก็ได้ แต่ตามสเปกไม่จำเป็น
     })
     .catch(err => console.error("Error fetching result data:", err));
 }
@@ -45,7 +44,7 @@ function loadAllTable() {
 // โหมด "พืชชนิดนั้น" เมื่อคลิกการ์ด: รับ class_id แล้ว filter
 function loadPerPlantTable(classId) {
   const qs = getDateParams();
-  const url = 'http://localhost:3001/api/results' + (qs ? ('?' + qs) : '');
+  const url = '/api/results' + (qs ? ('?' + qs) : '');
   fetch(url)
     .then(r => r.json())
     .then(data => {
@@ -96,7 +95,7 @@ function initList() {
   };
   function loadPerPlantTableInternal(cid) {
     const qs = getDateParams();
-    const url = 'http://localhost:3001/api/results' + (qs ? ('?' + qs) : '');
+  const url = '/api/results' + (qs ? ('?' + qs) : '');
     fetch(url)
       .then(r => r.json())
       .then(data => {

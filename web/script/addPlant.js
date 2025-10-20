@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return byClass ? (byClass.value || '').trim() : '';
         };
 
-        // ---- nutritional_text / nutritional_table helpers (UI) ----
+        // ---- nutritional_text / nutritional_table (UI) ----
         const ensureNutritionalUI = () => {
             // show textarea when checkbox nutritional_text is present and checked
             const textCb = document.querySelector('input[name="nutritional_text"]');
@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     area = document.createElement('textarea');
                     area.id = 'nutritional_textarea';
                     area.placeholder = 'คำอธิบาย';
-                    textCb.parentNode.insertBefore(area, textCb.parentNode.nextSibling);
+                    // insert after the checkbox element; use textCb.nextSibling which is a child of the same parent
+                    textCb.parentNode.insertBefore(area, textCb.nextSibling);
                 }
                 area.style.display = textCb.checked ? 'block' : 'none';
             }
@@ -57,21 +58,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     wrapper.appendChild(tbl);
                     // default table: header row: name, unit, amount and one data row
                     const thead = document.createElement('thead'); thead.innerHTML = '<tr><th>รายการ</th><th>หน่วย</th><th>amount</th></tr>';
-                    const tbody = document.createElement('tbody'); tbody.innerHTML = '<tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>';
+                    // use inputs inside TD to make extraction reliable across browsers
+                    const tbody = document.createElement('tbody'); tbody.innerHTML = '<tr><td><input type="text" class="n_name" /></td><td><input type="text" class="n_unit" /></td><td><input type="text" class="n_amount" /></td></tr>';
                     tbl.appendChild(thead); tbl.appendChild(tbody);
 
                     // attach handlers
                     addRowBtn.addEventListener('click', ()=>{
-                        const r = document.createElement('tr'); r.innerHTML = '<td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>';
+                        const r = document.createElement('tr'); r.innerHTML = '<td><input type="text" class="n_name" /></td><td><input type="text" class="n_unit" /></td><td><input type="text" class="n_amount" /></td>';
                         tbl.querySelector('tbody').appendChild(r);
                     });
                     remRowBtn.addEventListener('click', ()=>{
                         const rows = tbl.querySelectorAll('tbody tr'); if (rows.length>0) rows[rows.length-1].remove();
                     });
                     addColBtn.addEventListener('click', ()=>{
-                        // add header cell and editable cell to each row
+                        // add header cell and input cell to each row
                         const th = document.createElement('th'); th.textContent = 'col'; tbl.querySelector('thead tr').appendChild(th);
-                        tbl.querySelectorAll('tbody tr').forEach(tr=>{ const td = document.createElement('td'); td.contentEditable='true'; tr.appendChild(td); });
+                        tbl.querySelectorAll('tbody tr').forEach(tr=>{ const td = document.createElement('td'); const inp = document.createElement('input'); inp.type='text'; td.appendChild(inp); tr.appendChild(td); });
                     });
                     remColBtn.addEventListener('click', ()=>{
                         const heads = tbl.querySelectorAll('thead th'); if (heads.length>0) heads[heads.length-1].remove();
@@ -99,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const fd = new FormData();
                 fd.append('image', file);
 
-                const upRes = await fetch('http://localhost:3001/api/upload', {
+                const upRes = await fetch('/api/upload', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -138,10 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (tbl) {
                         const rows = tbl.querySelectorAll('tbody tr');
                         rows.forEach(r => {
-                            // support both input-based editor (edit) and plain td cells (read-only)
-                            const inputName = r.querySelector('.n_name') || r.children[0].querySelector('input');
-                            const inputUnit = r.querySelector('.n_unit') || r.children[1].querySelector('input');
-                            const inputAmount = r.querySelector('.n_amount') || r.children[2].querySelector('input');
+                            // prefer inputs with our classes
+                            const inputName = r.querySelector('.n_name') || r.querySelector('input');
+                            const inputUnit = r.querySelector('.n_unit') || (r.children[1] && r.children[1].querySelector('input'));
+                            const inputAmount = r.querySelector('.n_amount') || (r.children[2] && r.children[2].querySelector('input'));
                             const nameVal = inputName ? (inputName.value || '').trim() : (r.children[0]?.textContent || '').trim();
                             const unitVal = inputUnit ? (inputUnit.value || '').trim() : (r.children[1]?.textContent || '').trim();
                             let amtVal = inputAmount ? (inputAmount.value || '').trim() : (r.children[2]?.textContent || '').trim();
@@ -171,18 +173,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 nutritional_value: nutritional_value
             };
 
+            // debug: log collected nutritional_value
+            console.debug('Collected nutritional_value:', nutritional_value);
+
+            // if either checkbox is checked, ensure we actually have at least one nutritional item
+            const textCb = document.querySelector('input[name="nutritional_text"]');
+            const tableCb = document.querySelector('input[name="nutritional_table"]');
+            if ((textCb && textCb.checked) || (tableCb && tableCb.checked)) {
+                if (!nutritional_value || nutritional_value.length === 0) {
+                    alert('คุณได้เลือกที่จะเพิ่มข้อมูลคุณค่าทางโภชนาการ แต่ยังไม่มีรายการ กรุณาเพิ่มอย่างน้อยหนึ่งรายการ');
+                    return;
+                }
+            }
+
             // merge with original plant: only send fields that have non-empty values to avoid overwriting
-            const mergePayload = (origPlant, newPayload) => {
+            // accepts (orig, updates) and returns merged object where `updates` override `orig` but empty strings do not overwrite
+            const mergePayload = (orig = {}, updates = {}) => {
                 const out = {};
-                Object.keys(newPayload).forEach(k => {
-                    const v = newPayload[k];
-                    if (v !== undefined && v !== null) {
-                        // for strings: only include if not empty
-                        if (typeof v === 'string') {
-                            if (v !== '') out[k] = v;
-                        } else {
-                            out[k] = v;
-                        }
+                // start with original values
+                Object.keys(orig).forEach(k => { out[k] = orig[k]; });
+                // apply updates but skip empty string values
+                Object.keys(updates).forEach(k => {
+                    const v = updates[k];
+                    if (v === undefined || v === null) return;
+                    if (typeof v === 'string') {
+                        if (v !== '') out[k] = v; // only overwrite with non-empty string
+                    } else {
+                        out[k] = v;
                     }
                 });
                 return out;
@@ -192,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // UPDATE path
                 const origPlant = window.__originalPlant || {};
                 const sendPayload = mergePayload(origPlant, payload);
-                const res = await fetch(`http://localhost:3001/api/update/${encodeURIComponent(editId)}`, {
+                const res = await fetch(`/api/update/${encodeURIComponent(editId)}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -214,7 +231,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // INSERT path (original behaviour)
-            const res = await fetch('http://localhost:3001/api/insert', {
+            // Basic validation: require a name
+            if (!payload.name || payload.name.trim() === '') {
+                alert('Please provide a plant name.');
+                return;
+            }
+            console.debug('Sending payload to /api/insert:', payload);
+            const res = await fetch('/api/insert', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -224,8 +247,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error || err.msg || 'Insert failed');
+                // try to extract JSON or plain text error body for better diagnostics
+                let errBody = null;
+                try { errBody = await res.json(); } catch(e) { try { errBody = await res.text(); } catch(e2) { errBody = '<unreadable response>'; } }
+                console.error('Insert failed, status:', res.status, 'body:', errBody);
+                throw new Error((errBody && (errBody.error || errBody.msg || JSON.stringify(errBody))) || `Insert failed (status ${res.status})`);
             }
 
             await res.json();
