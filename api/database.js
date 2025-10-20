@@ -75,6 +75,7 @@ const connection = mysql.createPool({//สร้างตัวเชื่อ�
     user: "root",
     password: databasepassword,
     database: "app_database",
+    dateStrings: true,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -83,96 +84,77 @@ const connection = mysql.createPool({//สร้างตัวเชื่อ�
 console.log("Connected to MySQL Successfully.");
 
 //สร้าง endpoint ของ api สำหรับตรวจสอบการเข้าสู่ระบบ
-app.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
-    const query = "SELECT * FROM users WHERE username = ?";
-    
-    connection.query(query, [username], async (err, results) => {
-        if (err) {
-            console.log("Error to Login", err);
-            return res.status(500).json({ error: "Internal Server Error" });
-        }
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  const query = "SELECT * FROM users WHERE username = ?";
 
-        if (results.length === 1) {
-            const user = results[0];
-            const match = await bcrypt.compare(password, user.password);
-            if (match) {
-                const token = jwt.sign({ id: user.user_id, is_guest: user.is_guest }, "your_secret", { expiresIn: "1h" });
-                return res.send({ status: "ok", message: "Login success", accessToken: token });
-            } else {
-                return res.send({ status: "Failed To Login", message: "Invalid username or password" });
-            }
-        } else {
-            return res.send({ status: "Failed To Login", message: "Invalid username or password" });
-        }
-    });
+  try {
+    // mysql2/promise pool returns a promise that resolves to [rows, fields]
+    const [rows] = await connection.query(query, [username]);
+
+    if (!rows || rows.length !== 1) {
+      return res.status(401).json({ status: "Failed To Login", message: "Invalid username or password" });
+    }
+
+    const user = rows[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json({ status: "Failed To Login", message: "Invalid username or password" });
+    }
+
+    const token = jwt.sign({ id: user.user_id, is_guest: user.is_guest }, "your_secret", { expiresIn: "1h" });
+    return res.json({ status: "ok", message: "Login success", accessToken: token });
+  } catch (err) {
+    console.error("Error in /api/login:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 //สร้าง endpoint ของ api สำหรับอ่านชื่อแอดมินออกมาแสดงในหน้า index
-app.get('/api/auth',verifyToken,(req, res)=>{
-    const userId = req.user.id; // ได้จาก token ที่ decode แล้ว
-    const query = "SELECT username FROM users WHERE user_id = ?";
-    connection.query(query, [userId], (err, results) => {
-        if (err) {
-            console.log("Error to read user", err);
-            return res.status(500).json({ error: "Internal Server Error" });
-        }
-        if (results.length === 0) {
-            return res.status(404).json({ error: "User not found" });
-        }
-        const user = results[0];
-        res.json({
-            status: "ok",
-            user: user
-        });
-    });
-})
+app.get('/api/auth', verifyToken, async (req, res) => {
+  const userId = req.user.id; // ได้จาก token ที่ decode แล้ว
+  const query = "SELECT username FROM users WHERE user_id = ?";
+  try {
+    const [results] = await connection.query(query, [userId]);
+    if (!results || results.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const user = results[0];
+    res.json({ status: "ok", user });
+  } catch (err) {
+    console.log("Error to read user", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 //สร้าง endpoint ของ api สำหรับเพิ่มข้อมูลแอดมิน
-app.post('/api/insertadmin',verifyToken,async (req, res)=>{
-    const {username,password,is_guest} = req.body;
-    try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const query = "INSERT INTO users (username, password, is_guest) VALUES (?, ?, false)";
-        const value = [username, hashedPassword];
-
-        connection.query(query, value, (err, results) => {
-            if (err) {
-                console.log("Error to insert user data", err);
-                return res.status(500).json({ error: "Internal Server Error" });
-            }
-
-            res.json({
-                msg: "Inserted admin successfully",
-                insertedId: results.insertId
-            });
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Hashing error" });
-    }
-})
+app.post('/api/insertadmin', verifyToken, async (req, res) => {
+  const { username, password, is_guest } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const query = "INSERT INTO users (username, password, is_guest) VALUES (?, ?, false)";
+    const value = [username, hashedPassword];
+    const [result] = await connection.query(query, value);
+    res.json({ msg: "Inserted admin successfully", insertedId: result.insertId });
+  } catch (error) {
+    console.log('Error in /api/insertadmin', error);
+    res.status(500).json({ error: "Hashing error" });
+  }
+});
 
 //สร้าง endpoint ของ api สำหรับเพิ่มข้อมูลผู้ใช้งานทั่วไป (แบบ guest)
-app.post('/api/create_user',async (req, res)=>{
-    try {
-        const query = "INSERT INTO users (user_id, is_guest) VALUES ( ? , true)";
-        const userId = 'guest_' + Math.floor(Math.random() * 1000);
-        const value = [userId];
-        connection.query(query, value, (err, results) => {
-            if (err) {
-                console.log("Error to insert user data", err);
-                return res.status(500).json({ error: "Internal Server Error" });
-            }
-
-            res.json({
-                msg: "Inserted guest successfully",
-                insertedId: results.insertId
-            });
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Hashing error" });
-    }
-})
+app.post('/api/create_user', async (req, res) => {
+  try {
+    const query = "INSERT INTO users (user_id, is_guest) VALUES ( ? , true)";
+    const userId = 'guest_' + Math.floor(Math.random() * 1000);
+    const value = [userId];
+    const [result] = await connection.query(query, value);
+    res.json({ msg: "Inserted guest successfully", insertedId: result.insertId });
+  } catch (error) {
+    console.log('Error in /api/create_user', error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 //สร้าง endpoint ของ api สำหรับการรับข้อเสนอแนะจากผู้ใช้งาน
 app.post('/api/suggestions', async (req, res) => {
@@ -191,42 +173,35 @@ app.post('/api/suggestions', async (req, res) => {
 });
 
 //สร้าง endpoint ของ api สำหรับเพิ่มข้อมูลพืช
-app.post('/api/insert',verifyToken,(req, res)=>{
-    const {image_leaf_path, name, common_name, scientific_name, family, medicinal_benefits, nutritional_benefits, nutritional_value} = req.body;
-    const query = "INSERT INTO vegetables (image_leaf_path, name, common_name, scientific_name, family, medicinal_benefits, nutritional_benefits, nutritional_value) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    const value = [image_leaf_path,name,common_name,scientific_name,family,medicinal_benefits,nutritional_benefits,
-        JSON.stringify(nutritional_value)];//แปลงอันที่เป็นให้เป็น JSON ก่อนไปเก็บในฐานข้อมูล
-    connection.query(query,value,(err, results)=>{
-        if(err){
-            console.log("Error to insert Data ",err);
-            res.status(500).json({error:"Internal Server Error"});
-        }
-        res.json({
-            msg:"Inserted successfully",
-            insertedId: results.insertId
-        })
-    })
-})
+app.post('/api/insert', verifyToken, async (req, res) => {
+  const { image_leaf_path, name, common_name, scientific_name, family, medicinal_benefits, nutritional_benefits, nutritional_value } = req.body;
+  const query = "INSERT INTO vegetables (image_leaf_path, name, common_name, scientific_name, family, medicinal_benefits, nutritional_benefits, nutritional_value) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+  const value = [image_leaf_path, name, common_name, scientific_name, family, medicinal_benefits, nutritional_benefits, JSON.stringify(nutritional_value)];
+  try {
+    const [result] = await connection.query(query, value);
+    res.json({ msg: "Inserted successfully", insertedId: result.insertId });
+  } catch (err) {
+    console.log("Error to insert Data ", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 //สร้าง endpoint ของ api สำหรับอ่านข้อมูลทั้งหมด
-app.get('/api/read',(req, res)=>{
-    const query = "SELECT plant_id, class_id, image_leaf_path, name FROM vegetables";
-    connection.query(query,(err, results)=>{
-        if(err){
-            console.log("Error to read Data ",err);
-            res.status(500).json({error:"Internal Server Error"});
-        }
-        res.json({
-            msg:"Read successfully",
-            plant: results
-        })
-    })
-})
+app.get('/api/read', async (req, res) => {
+  const query = "SELECT plant_id, class_id, image_leaf_path, name FROM vegetables";
+  try {
+    const [results] = await connection.query(query);
+    res.json({ msg: "Read successfully", plant: results });
+  } catch (err) {
+    console.log("Error to read Data ", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 //สร้าง endpoint ของ api สำหรับอ่านข้อมูลทั้งหมดของ ai_results และทำการคำนวณค่า ถูก/ผิด และ จำนวนคนที่ส่งข้อมูลเข้ามา
 //สรุปผลต่อ class_id + เรียงตาม conclusion มาก ไป น้อย
 // ===== [UPDATE] รองรับ ?date=YYYY-MM-DD หรือ ?start=YYYY-MM-DD&end=YYYY-MM-DD ====
-app.get('/api/ai_results', (req, res) => {
+app.get('/api/ai_results', async (req, res) => {
   const { where, params } = buildDateRangeWhere('ar', req.query);
 
   const query = `
@@ -250,103 +225,114 @@ app.get('/api/ai_results', (req, res) => {
     ORDER BY conclusion DESC, ac.class_id ASC;
   `;
 
-  connection.query(query, params, (err, results) => {
-    if (err) {
-      console.log("Error to read Data ", err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
+  try {
+    const [results] = await connection.query(query, params);
     res.json({ msg: "Read successfully", ai_result: results });
-  });
+  } catch (err) {
+    console.log("Error to read Data ", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 //สร้าง endpoint ของ api สำหรับอ่านข้อมูลเจาะจงพืช
-app.get('/api/read/:id',(req, res)=>{
-    let id = req.params.id;//รับค่า param id เข้ามา
-    const query = `SELECT image_leaf_path, name, common_name, scientific_name, family, medicinal_benefits, nutritional_benefits, nutritional_value FROM vegetables WHERE plant_id = ?`;
-    connection.query(query,[id],(err, results)=>{
-        if(err){
-            console.log("Error to read Data ",err);
-            res.status(500).json({error:"Internal Server Error"});
-        }
-        if (results.length === 0) {
-            return res.status(404).json({ error: "Plant not found" });
-        }
-        res.json({
-            msg:"Read successfully",
-            plant: results[0]
-        })
-    })
-})
+app.get('/api/read/:id', async (req, res) => {
+  let id = req.params.id; //รับค่า param id เข้ามา
+  const query = `SELECT image_leaf_path, name, common_name, scientific_name, family, medicinal_benefits, nutritional_benefits, nutritional_value FROM vegetables WHERE plant_id = ?`;
+  try {
+    const [results] = await connection.query(query, [id]);
+    if (!results || results.length === 0) {
+      return res.status(404).json({ error: "Plant not found" });
+    }
+    res.json({ msg: "Read successfully", plant: results[0] });
+  } catch (err) {
+    console.log("Error to read Data ", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 //สร้าง endpoint ของ api สำหรับแก้ไขข้อมูล(แบบบางส่วนและทั้งหมด)
-app.put('/api/update/:id',verifyToken,(req, res)=>{
-    let id = req.params.id;//รับค่า param id เข้ามา
-    let updatePlant = req.body;
-    const query = `UPDATE vegetables SET ? WHERE plant_id = ?`;
-    const value = [updatePlant, id];
-    connection.query(query,value,(err, results)=>{
-        if(err){
-            console.log("Error to update Data ",err);
-            res.status(500).json({error:"Internal Server Error"});
-            return;
-        }
-        res.json({
-            msg:"Updated successfully",
-            affectedRows: results.affectedRows
-        })
-    })
-})
+app.put('/api/update/:id', verifyToken, async (req, res) => {
+  let id = req.params.id; //รับค่า param id เข้ามา
+  let updatePlant = req.body;
+  // Diagnostic logging: print the incoming payload for debugging
+  console.log('PUT /api/update payload for id=', id, 'payload=', JSON.stringify(updatePlant));
+  try {
+    // also log types inside payload keys (helps catch non-serializable values)
+    if (updatePlant && typeof updatePlant === 'object') {
+      Object.keys(updatePlant).forEach(k => {
+        const v = updatePlant[k];
+        console.log(`  field: ${k}, type: ${typeof v}`);
+      });
+    }
+  } catch (dbgErr) {
+    console.log('Diagnostic logging failed:', dbgErr);
+  }
+  // Ensure fields have the correct types for SQL binding. In particular,
+  // `nutritional_value` is stored as JSON text in the DB, so stringify if
+  // the client sent an array/object.
+  if (updatePlant && updatePlant.nutritional_value && typeof updatePlant.nutritional_value !== 'string') {
+    try {
+      updatePlant.nutritional_value = JSON.stringify(updatePlant.nutritional_value);
+    } catch (e) {
+      console.log('Failed to stringify nutritional_value:', e);
+      return res.status(400).json({ error: 'Invalid nutritional_value format' });
+    }
+  }
+
+  const query = `UPDATE vegetables SET ? WHERE plant_id = ?`;
+  const value = [updatePlant, id];
+  try {
+    const [results] = await connection.query(query, value);
+    res.json({ msg: "Updated successfully", affectedRows: results.affectedRows });
+  } catch (err) {
+    console.log("Error to update Data ", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 //สร้าง endpoint ของ api สำหรับลบข้อมูล
-app.delete('/api/delete/:id',verifyToken,(req, res)=>{
-    let id = req.params.id;
-    const query = "DELETE FROM vegetables WHERE plant_id = ?";
-    connection.query(query,[id],(err, results)=>{
-        if(err){
-            console.log("Error to insert Data ",err);
-            res.status(500).json({error:"Internal Server Error"});
-        }
-        res.json({
-            msg:"Deleted successfully",
-        })
-    })
-})
+app.delete('/api/delete/:id', verifyToken, async (req, res) => {
+  let id = req.params.id;
+  const query = "DELETE FROM vegetables WHERE plant_id = ?";
+  try {
+    await connection.query(query, [id]);
+    res.json({ msg: "Deleted successfully" });
+  } catch (err) {
+    console.log("Error to delete Data ", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 //สร้าง endpoint ของ api สำหรับอ่านข้อมูลทั้งหมดของ feedback
-app.get('/api/read_feedback',verifyToken,(req, res)=>{
-    const query = "SELECT suggestions_id, user_id, message, created_at FROM suggestions";
-    connection.query(query,(err, results)=>{
-        if(err){
-            console.log("Error to read Data ",err);
-            res.status(500).json({error:"Internal Server Error"});
-        }
-        res.json({
-            msg:"Read successfully",
-            suggestions: results
-        })
-    })
-})
+app.get('/api/read_feedback', verifyToken, async (req, res) => {
+  const query = "SELECT suggestions_id, user_id, message, created_at FROM suggestions";
+  try {
+    const [results] = await connection.query(query);
+    res.json({ msg: "Read successfully", suggestions: results });
+  } catch (err) {
+    console.log("Error to read Data ", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 //สร้าง endpoint ของ api สำหรับลบ feedback
-app.delete('/api/delete_feedback/:suggestions_id',verifyToken,(req, res)=>{
-    let suggestionsid = req.params.suggestions_id;
-    const query = "DELETE FROM suggestions WHERE suggestions_id = ?";
-    connection.query(query,[suggestionsid],(err, results)=>{
-        if(err){
-            console.log("Error to Delete Data ",err);
-            res.status(500).json({error:"Internal Server Error"});
-        }
-        res.json({
-            msg:"Deleted successfully",
-        })
-    })
-})
+app.delete('/api/delete_feedback/:suggestions_id', verifyToken, async (req, res) => {
+  let suggestionsid = req.params.suggestions_id;
+  const query = "DELETE FROM suggestions WHERE suggestions_id = ?";
+  try {
+    await connection.query(query, [suggestionsid]);
+    res.json({ msg: "Deleted successfully" });
+  } catch (err) {
+    console.log("Error to Delete Data ", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 // สร้าง endpoint ของ api สำหรับอัปโหลดไฟล์ (requires auth)
 app.post('/api/upload', verifyToken, upload.single('image'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-    }
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
   // return the public URL that clients can use to load the image
   const imagePath = `../src/images/${req.file.filename}`;
   res.json({ msg: 'Uploaded successfully', imagePath });
@@ -354,31 +340,32 @@ app.post('/api/upload', verifyToken, upload.single('image'), (req, res) => {
 
 // สร้าง endpoint ของ api สำหรับอัปโหลดไฟล์ สำหรับ guest (no auth)
 app.post('/api/guest_upload', upload.single('image'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-    }
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
   // return the public URL that clients can use to load the image
   const imagePath = `../src/images/${req.file.filename}`;
   res.json({ msg: 'Uploaded successfully', imagePath });
 });
 
 //สร้าง endpoint ของ api สำหรับการบันทึก log ของการค้นหาข้อมูลพืชจาก input ในช่อง search
-app.put('/api/log_search', (req, res) => {
+app.put('/api/log_search', async (req, res) => {
   let searchQuery = req.body.searchQuery;
   const query = `INSERT INTO search_logs (user_id, search_term, search_time) VALUES (?, ?, ?)`;
-  const value = [req.user.id, searchQuery, new Date()]; // 🔧 เติม timestamp
-  connection.query(query, value, (err, results) => {
-    if (err) {
-      console.log("Error to input log data ", err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
+  const userId = req.user && req.user.id ? req.user.id : null;
+  const value = [userId, searchQuery, new Date()]; // เติม timestamp
+  try {
+    const [results] = await connection.query(query, value);
     res.json({ msg: "Save log successfully", affectedRows: results.affectedRows });
-  });
+  } catch (err) {
+    console.log("Error to input log data ", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 // ===== [ADD] /api/results สำหรับ list.html (แสดงทุกแถวของผลลัพธ์ + label) =====
 // รองรับพารามิเตอร์วันเดียว/ช่วงวัน เช่นเดียวกับ /api/ai_results
-app.get('/api/results', (req, res) => {
+app.get('/api/results', async (req, res) => {
   const { where, params } = buildDateRangeWhere('ar', req.query);
   const sql = `
     SELECT 
@@ -387,24 +374,24 @@ app.get('/api/results', (req, res) => {
       ar.class_id,
       ac.class_label,
       ar.confidence_score,
-      ar.processed_time,
+      DATE_FORMAT(ar.processed_time, '%Y-%m-%d %H:%i:%s') AS processed_time,
       ar.is_correct
     FROM ai_results ar
     JOIN ai_classes ac ON ac.class_id = ar.class_id
     ${where}
     ORDER BY ar.processed_time DESC, ar.result_id DESC
   `;
-  connection.query(sql, params, (err, rows) => {
-    if (err) {
-      console.error('Error /api/results', err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
+  try {
+    const [rows] = await connection.query(sql, params);
     res.json({ msg: "Read successfully", ai_result: rows });
-  });
+  } catch (err) {
+    console.error('Error /api/results', err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 // ===== [ADD] รายละเอียดของผลลัพธ์เดียว สำหรับหน้า detail.html =====
-app.get('/api/result_detail', (req, res) => {
+app.get('/api/result_detail', async (req, res) => {
   const { result_id } = req.query;
   if (!result_id) return res.status(400).json({ error: "result_id is required" });
 
@@ -415,9 +402,9 @@ app.get('/api/result_detail', (req, res) => {
       ar.class_id,
       ac.class_label,
       ar.confidence_score,
-      ar.processed_time,
+      DATE_FORMAT(ar.processed_time, '%Y-%m-%d %H:%i:%s') AS processed_time,
       ar.is_correct,
-      ar.feedback_time,
+      DATE_FORMAT(ar.feedback_time, '%Y-%m-%d %H:%i:%s') AS feedback_time,
       up.image_path
     FROM ai_results ar
     JOIN ai_classes ac ON ac.class_id = ar.class_id
@@ -425,18 +412,18 @@ app.get('/api/result_detail', (req, res) => {
     WHERE ar.result_id = ? 
     LIMIT 1
   `;
-  connection.query(sql, [result_id], (err, rows) => {
-    if (err) {
-      console.error('Error /api/result_detail', err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
+  try {
+    const [rows] = await connection.query(sql, [result_id]);
     if (!rows.length) return res.status(404).json({ error: "Result not found" });
     res.json({ msg: "Read successfully", result: rows[0] });
-  });
+  } catch (err) {
+    console.error('Error /api/result_detail', err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 // ===== [ADD] อัปเดต is_correct + feedback_time (ต้องการสิทธิ์) =====
-app.put('/api/result_feedback/:result_id', verifyToken, (req, res) => {
+app.put('/api/result_feedback/:result_id', verifyToken, async (req, res) => {
   const { result_id } = req.params;
   const { is_correct } = req.body; // ควรเป็น 0 หรือ 1
 
@@ -449,13 +436,13 @@ app.put('/api/result_feedback/:result_id', verifyToken, (req, res) => {
     SET is_correct = ?, feedback_time = NOW()
     WHERE result_id = ?
   `;
-  connection.query(sql, [is_correct, result_id], (err, r) => {
-    if (err) {
-      console.error('Error update feedback', err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
+  try {
+    const [r] = await connection.query(sql, [is_correct, result_id]);
     res.json({ msg: "Updated feedback successfully", affectedRows: r.affectedRows });
-  });
+  } catch (err) {
+    console.error('Error update feedback', err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 setupModelRoutes(app, connection, upload);

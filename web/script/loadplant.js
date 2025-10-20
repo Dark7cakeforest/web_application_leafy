@@ -20,7 +20,7 @@ function bindDatepickReload(reloadFn) {
   [d1, d2].forEach(el => el && el.addEventListener('change', reloadFn));
 }
 
-function renderCards(plants, aiResults, mode) {
+function renderCards(plants, aiResults) {
   const containerMain = document.getElementById("plants");
   const statusEl = document.getElementById('status');
   containerMain.innerHTML = "";
@@ -57,7 +57,7 @@ function renderCards(plants, aiResults, mode) {
     return container;
   };
 
-  // index/static: top 10 + แสดงสถิติ (อิงช่วงวันที่ที่เลือก)
+  // index/static: top 10 stamp+ แสดงสถิติ (อิงช่วงวันที่ที่เลือก)
   if (indexPage || staticPage) {
     const rankable = plants.filter(p => p.class_id !== null && p.class_id !== undefined);
     rankable.sort((a, b) => {
@@ -150,7 +150,7 @@ function renderCards(plants, aiResults, mode) {
 
         try {
           const token = localStorage.getItem('jwt') || localStorage.getItem('token') || localStorage.getItem('accessToken');
-          const res = await fetch(`http://localhost:3001/api/delete/${plant.plant_id}`, {
+          const res = await fetch(`/api/delete/${plant.plant_id}`, {
             method: "DELETE",
             headers: token ? { "Authorization": "Bearer " + token } : {}
           });
@@ -187,9 +187,9 @@ function renderCards(plants, aiResults, mode) {
 // ===== main load (ครั้งแรก + เมื่อเปลี่ยนวันที่) =====
 function reloadAll() {
   const qs = getDateParams();
-  const aiURL = 'http://localhost:3001/api/ai_results' + (qs ? ('?' + qs) : '');
+  const aiURL = '/api/ai_results' + (qs ? ('?' + qs) : '');
   Promise.all([
-    fetch('http://localhost:3001/api/read').then(r => r.json()),
+    fetch('/api/read').then(r => r.json()),
     fetch(aiURL).then(r => r.json())
   ])
   .then(([plantResp, aiResp]) => {

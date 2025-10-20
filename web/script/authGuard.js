@@ -5,7 +5,7 @@ if (jwt == null){//ออกแล้วเด้งไปหน้า login
 
 function loadUser(){
     const xhttp = new XMLHttpRequest();//เรียก api
-    xhttp.open("GET","http://localhost:3001/api/auth");//method open + url ของ api ฐานข้อมูล
+    xhttp.open("GET","/api/auth");//method open + url ของ api ฐานข้อมูล
     xhttp.setRequestHeader("Authorization","Bearer "+jwt);//ส่ง token
     xhttp.send();
     xhttp.onreadystatechange = function(){//callback เรียกค่าที่ถูกส่งกลับมาจาก api

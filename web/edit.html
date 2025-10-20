@@ -66,14 +66,20 @@
 
                 <div>
                     <button class="form-add-btn" type="submit">บันทึกข้อมูล</button>
-                    <button class="form-delete-btn" type="reset">ล้างข้อมูล</button>
+                    <button class="form-delete-btn" type="button" id="backBtn">ย้อนกลับ</button>
                 </div>
             </form>
         </div>
     </div>
-    <script src="script/authGuard.js"></script>
-    <script src="script/populateEdit.js"></script>
-    <!-- include addPlant handler so edit form uses the same submit logic as add -->
-    <script src="script/addPlant.js"></script>
+        <script>
+            // wire the "ย้อนกลับ" button to go back to edit_plant listing
+            document.addEventListener('DOMContentLoaded', () => {
+                const b = document.getElementById('backBtn');
+                if (b) b.addEventListener('click', () => { window.location.href = 'edit_plant.html'; });
+            });
+        </script>
+        <script src="script/authGuard.js"></script>
+        <script src="script/populateEdit.js"></script>
+        <script src="script/addPlant.js"></script>
 </body>
 </html>

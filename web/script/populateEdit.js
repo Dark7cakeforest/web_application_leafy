@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!id) return;
 
   try {
-    const res = await fetch(`http://localhost:3001/api/read/${id}`);
+  const res = await fetch(`/api/read/${id}`);
     if (!res.ok) throw new Error('Failed to fetch plant data');
     const data = await res.json();
     const plant = data.plant;

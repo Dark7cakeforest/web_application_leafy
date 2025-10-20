@@ -14,7 +14,7 @@
   </div>
     <div class="container d-flex justify-content-center align-items-start mt-4">
     <div class="form-box w-100" style="max-width: 500px;">
-      <form method="POST" onsubmit="return login()"><!--ฟอร์มเข้าสู่ระบบของแอดมิน-->
+  <form method="POST" onsubmit="login(event); return false;"><!--ฟอร์มเข้าสู่ระบบของแอดมิน-->
         <div class="mb-3">
           <input type="text" class="form-control form-control-lg" id="username" placeholder="Username" style="color: #02542D;" required>
         </div>
