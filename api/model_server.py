@@ -4,6 +4,19 @@ from flask import Flask, request, jsonify
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+from PIL import ImageFile
+import warnings
+
+# Allow processing very large images (we will downscale them for the model).
+# The default PIL limit for total pixels can raise DecompressionBombWarning or
+# trigger a safety check. Disable the check here because the server will
+# immediately downscale the image to a small size (IMAGE_SIZE) before using it.
+warnings.simplefilter('ignore', Image.DecompressionBombWarning)
+# Also allow loading images that may be truncated in some uploads
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+# Disable the max pixels check (set to None). If you prefer a hard limit,
+# set this to a large integer instead of None.
+Image.MAX_IMAGE_PIXELS = None
 
 # --- ค่าคงที่ ---
 MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'model', 'plant_mv2_float32.tflite')

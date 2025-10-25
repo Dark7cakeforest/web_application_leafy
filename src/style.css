@@ -185,6 +185,13 @@ a#detail:active{/*เอฟเฟกต์ตอนกดปุ่มราย�
     font-size: 35px;
     margin: 0;
 }
+p.plant-image{/*ถูกและผิดในบรรทัดเดียวกัน*/
+    width: 300px;
+    height: 300px;
+    margin: 10px 0 10px 0;
+    border-radius: 10px;
+    object-fit: cover;
+}
 /*ส่วนของในหน้า edit plant*/
 .edit-btn{
     font-size: 30px;

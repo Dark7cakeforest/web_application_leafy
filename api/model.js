@@ -45,7 +45,7 @@ function setupModelRoutes(app, connection, upload) {
             );
             const resultId = aiResult.insertId;
 
-            // Step 4: ดึงข้อมูลพืชจากตาราง vegetables (เหมือนเดิม)
+            // Step 4: ดึงข้อมูลพืชจากตาราง vegetables
             const [vegRows] = await connection.query(
                 "SELECT name, image_leaf_path FROM vegetables WHERE class_id = ?",
                 [classId]
@@ -55,7 +55,7 @@ function setupModelRoutes(app, connection, upload) {
                 return res.status(404).json({ error: `Plant details not found for class_id: ${classId}` });
             }
 
-            // Step 5: ส่งผลลัพธ์กลับไปให้ Flutter (เหมือนเดิม)
+            // Step 5: ส่งผลลัพธ์กลับไปให้ Flutter
             res.json({
                 success: true,
                 guest_user_id: guestUserId,
@@ -74,8 +74,6 @@ function setupModelRoutes(app, connection, upload) {
             res.status(500).json({ error: 'Internal Server Error' });
         }
     });
-
-    // --- โค้ดส่วน /api/mobile_feedback และ /api/plant_details ยังคงเหมือนเดิม ไม่ต้องแก้ไข ---
 
     app.put('/api/mobile_feedback/:result_id', async (req, res) => {
         const { result_id } = req.params;
