@@ -23,7 +23,6 @@ h2{
      color: #02542D;
 }
 form{
-    margin-top: 150px;
     margin-left: 10px;
 }
 table{
@@ -230,3 +229,5 @@ a#detail:active{/*เอฟเฟกต์ตอนกดปุ่มราย�
     display: none;
   }
 }
+
+

@@ -2,6 +2,168 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('.add-plant-form');
     if (!form) return;
 
+    // Check if we're on edit.html page - if so, skip UI initialization (populateEdit.js handles it)
+    const isEditPage = window.location.pathname.includes('edit.html');
+    const hasEditId = new URLSearchParams(window.location.search).get('id');
+    
+    // ---- nutritional_text / nutritional_table (UI) ----
+    const ensureNutritionalUI = () => {
+        // show textarea when checkbox nutritional_text is present and checked
+        const textCb = document.querySelector('input[name="nutritional_text"]');
+        if (textCb) {
+            let area = document.getElementById('nutritional_textarea');
+            if (!area) {
+                area = document.createElement('textarea');
+                area.id = 'nutritional_textarea';
+                area.placeholder = 'คำอธิบาย';
+                // insert after the checkbox-group div
+                const checkboxGroup = textCb.closest('.checkbox-group');
+                if (checkboxGroup && checkboxGroup.parentNode) {
+                    checkboxGroup.parentNode.insertBefore(area, checkboxGroup.nextSibling);
+                } else {
+                    textCb.parentNode.insertBefore(area, textCb.nextSibling);
+                }
+            }
+            area.style.display = textCb.checked ? 'block' : 'none';
+        }
+
+        // show table when checkbox nutritional_table is present and checked
+        const tableCb = document.querySelector('input[name="nutritional_table"]');
+        if (tableCb) {
+            let wrapper = document.getElementById('nutritional_table_wrapper');
+            if (!wrapper) {
+                wrapper = document.createElement('div');
+                wrapper.id = 'nutritional_table_wrapper';
+                
+                const tbl = document.createElement('table');
+                tbl.className = 'nutritional_table_edit';
+                const thead = document.createElement('thead');
+                const tb = document.createElement('tbody');
+                
+                // Additional columns array
+                const additionalKeys = [];
+                
+                // Default header
+                let headerHtml = '<tr><th>รายการ</th>';
+                headerHtml += '<th>หน่วย</th><th>แอคชัน</th></tr>';
+                thead.innerHTML = headerHtml;
+                tbl.appendChild(thead);
+                
+                // Preload with 2 empty rows
+                for (let i = 0; i < 2; i++) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td><input type="text" class="n_name" /></td><td><input type="text" class="n_unit" /></td><td><button class="rm">ลบ</button></td>';
+                    tb.appendChild(tr);
+                }
+                tbl.appendChild(tb);
+                wrapper.appendChild(tbl);
+                
+                // Button controls
+                const btnContainer = document.createElement('div');
+                btnContainer.style.textAlign = 'center';
+                btnContainer.style.marginTop = '0.5rem';
+                
+                const addRowBtn = document.createElement('button');
+                addRowBtn.type = 'button';
+                addRowBtn.textContent = 'เพิ่มแถว';
+                addRowBtn.style.margin = '0 0.25rem';
+                
+                const addColBtn = document.createElement('button');
+                addColBtn.type = 'button';
+                addColBtn.textContent = 'เพิ่มคอลัมน์';
+                addColBtn.style.margin = '0 0.25rem';
+                
+                btnContainer.appendChild(addRowBtn);
+                btnContainer.appendChild(addColBtn);
+                wrapper.appendChild(btnContainer);
+
+                // Add row handler
+                addRowBtn.addEventListener('click', () => {
+                    const tr = document.createElement('tr');
+                    let rowHtml = '<td><input type="text" class="n_name" /></td>';
+                    additionalKeys.forEach(k => {
+                        rowHtml += `<td><input type="text" class="n_col_${k}" /></td>`;
+                    });
+                    rowHtml += '<td><input type="text" class="n_unit" /></td>';
+                    rowHtml += '<td><button class="rm">ลบ</button></td>';
+                    tr.innerHTML = rowHtml;
+                    tb.appendChild(tr);
+                });
+                
+                // Add column handler
+                addColBtn.addEventListener('click', () => {
+                    const colName = prompt('ชื่อคอลัมน์ใหม่:');
+                    if (!colName || colName.trim() === '') return;
+                    const trimmedName = colName.trim();
+                    if (additionalKeys.includes(trimmedName)) {
+                        alert('มีคอลัมน์นี้อยู่แล้ว');
+                        return;
+                    }
+                    additionalKeys.push(trimmedName);
+                    
+                    const headerRow = thead.querySelector('tr');
+                    const secondToLast = headerRow.children[headerRow.children.length - 2];
+                    const newHeader = document.createElement('th');
+                    newHeader.innerHTML = `${trimmedName}<button class="rm-col" data-col="${trimmedName}">×</button>`;
+                    headerRow.insertBefore(newHeader, secondToLast);
+                    
+                    tb.querySelectorAll('tr').forEach(tr => {
+                        const secondToLast = tr.children[tr.children.length - 2];
+                        const newCell = document.createElement('td');
+                        const inp = document.createElement('input');
+                        inp.type = 'text';
+                        inp.className = `n_col_${trimmedName}`;
+                        newCell.appendChild(inp);
+                        tr.insertBefore(newCell, secondToLast);
+                    });
+                });
+                
+                // Remove handler (delegate)
+                wrapper.addEventListener('click', (ev) => {
+                    if (ev.target && ev.target.classList.contains('rm')) {
+                        const row = ev.target.closest('tr');
+                        if (row && tb.querySelectorAll('tr').length > 1) {
+                            row.remove();
+                        } else {
+                            alert('ต้องมีอย่างน้อย 1 แถว');
+                        }
+                    } else if (ev.target && ev.target.classList.contains('rm-col')) {
+                        const colName = ev.target.getAttribute('data-col');
+                        const index = additionalKeys.indexOf(colName);
+                        if (index > -1) additionalKeys.splice(index, 1);
+                        
+                        const headerRow = thead.querySelector('tr');
+                        headerRow.querySelectorAll('th').forEach(th => {
+                            if (th.textContent.includes(colName)) th.remove();
+                        });
+                        
+                        tb.querySelectorAll('tr').forEach(tr => {
+                            tr.querySelectorAll('td').forEach(td => {
+                                const inp = td.querySelector(`.n_col_${colName}`);
+                                if (inp) td.remove();
+                            });
+                        });
+                    }
+                });
+
+                const checkboxGroup = tableCb.closest('.checkbox-group');
+                if (checkboxGroup && checkboxGroup.parentNode) {
+                    checkboxGroup.parentNode.insertBefore(wrapper, checkboxGroup.nextSibling);
+                } else {
+                    const formEl = document.querySelector('.add-plant-form');
+                    if (formEl) formEl.appendChild(wrapper);
+                }
+            }
+            wrapper.style.display = tableCb.checked ? 'block' : 'none';
+        }
+    };
+
+    // initialize UI only if not on edit.html (populateEdit.js handles edit page)
+    if (!isEditPage || !hasEditId) {
+        ensureNutritionalUI();
+        document.addEventListener('change', (e)=>{ if (e.target && (e.target.name==='nutritional_text' || e.target.name==='nutritional_table')) ensureNutritionalUI(); });
+    }
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -22,78 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const byClass = document.querySelector(cls);
             return byClass ? (byClass.value || '').trim() : '';
         };
-
-        // ---- nutritional_text / nutritional_table (UI) ----
-        const ensureNutritionalUI = () => {
-            // show textarea when checkbox nutritional_text is present and checked
-            const textCb = document.querySelector('input[name="nutritional_text"]');
-            if (textCb) {
-                let area = document.getElementById('nutritional_textarea');
-                if (!area) {
-                    area = document.createElement('textarea');
-                    area.id = 'nutritional_textarea';
-                    area.placeholder = 'คำอธิบาย';
-                    // insert after the checkbox element; use textCb.nextSibling which is a child of the same parent
-                    textCb.parentNode.insertBefore(area, textCb.nextSibling);
-                }
-                area.style.display = textCb.checked ? 'block' : 'none';
-            }
-
-            // show table when checkbox nutritional_table is present and checked
-            const tableCb = document.querySelector('input[name="nutritional_table"]');
-            if (tableCb) {
-                let wrapper = document.getElementById('nutritional_table_wrapper');
-                if (!wrapper) {
-                    wrapper = document.createElement('div');
-                    wrapper.id = 'nutritional_table_wrapper';
-                    // controls
-                    const ctrl = document.createElement('div');
-                    const addRowBtn = document.createElement('button'); addRowBtn.type='button'; addRowBtn.textContent='เพิ่มแถว';
-                    const addColBtn = document.createElement('button'); addColBtn.type='button'; addColBtn.textContent='เพิ่มคอลัมน์';
-                    const remRowBtn = document.createElement('button'); remRowBtn.type='button'; remRowBtn.textContent='ลบแถว';
-                    const remColBtn = document.createElement('button'); remColBtn.type='button'; remColBtn.textContent='ลบคอลัมน์';
-                    [addRowBtn, addColBtn, remRowBtn, remColBtn].forEach(b=>ctrl.appendChild(b));
-                    wrapper.appendChild(ctrl);
-                    const tbl = document.createElement('table'); tbl.className='nutritional_table_edit';
-                    wrapper.appendChild(tbl);
-                    // default table: header row: name, unit, amount and one data row
-                    const thead = document.createElement('thead'); thead.innerHTML = '<tr><th>รายการ</th><th>หน่วย</th><th>amount</th></tr>';
-                    // use inputs inside TD to make extraction reliable across browsers
-                    const tbody = document.createElement('tbody'); tbody.innerHTML = '<tr><td><input type="text" class="n_name" /></td><td><input type="text" class="n_unit" /></td><td><input type="text" class="n_amount" /></td></tr>';
-                    tbl.appendChild(thead); tbl.appendChild(tbody);
-
-                    // attach handlers
-                    addRowBtn.addEventListener('click', ()=>{
-                        const r = document.createElement('tr'); r.innerHTML = '<td><input type="text" class="n_name" /></td><td><input type="text" class="n_unit" /></td><td><input type="text" class="n_amount" /></td>';
-                        tbl.querySelector('tbody').appendChild(r);
-                    });
-                    remRowBtn.addEventListener('click', ()=>{
-                        const rows = tbl.querySelectorAll('tbody tr'); if (rows.length>0) rows[rows.length-1].remove();
-                    });
-                    addColBtn.addEventListener('click', ()=>{
-                        // add header cell and input cell to each row
-                        const th = document.createElement('th'); th.textContent = 'col'; tbl.querySelector('thead tr').appendChild(th);
-                        tbl.querySelectorAll('tbody tr').forEach(tr=>{ const td = document.createElement('td'); const inp = document.createElement('input'); inp.type='text'; td.appendChild(inp); tr.appendChild(td); });
-                    });
-                    remColBtn.addEventListener('click', ()=>{
-                        const heads = tbl.querySelectorAll('thead th'); if (heads.length>0) heads[heads.length-1].remove();
-                        tbl.querySelectorAll('tbody tr').forEach(tr=>{ const tds = tr.querySelectorAll('td'); if (tds.length>0) tds[tds.length-1].remove(); });
-                    });
-
-                    const formEl = document.querySelector('.add-plant-form');
-                    if (formEl) formEl.appendChild(wrapper);
-                }
-                wrapper.style.display = tableCb.checked ? 'block' : 'none';
-            }
-        };
-
-        // initialize UI
-        ensureNutritionalUI();
-        document.addEventListener('change', (e)=>{ if (e.target && (e.target.name==='nutritional_text' || e.target.name==='nutritional_table')) ensureNutritionalUI(); });
-
-        // detect edit mode (edit.html opens with ?id=...)
-        const params = new URLSearchParams(window.location.search);
-        const editId = params.get('id');
 
         try {
             let imagePath = '';
@@ -139,23 +229,47 @@ document.addEventListener('DOMContentLoaded', () => {
                     const tbl = tableWrapper.querySelector('table.nutritional_table_edit') || tableWrapper.querySelector('table');
                     if (tbl) {
                         const rows = tbl.querySelectorAll('tbody tr');
-                        rows.forEach(r => {
-                            // prefer inputs with our classes
-                            const inputName = r.querySelector('.n_name') || r.querySelector('input');
-                            const inputUnit = r.querySelector('.n_unit') || (r.children[1] && r.children[1].querySelector('input'));
-                            const inputAmount = r.querySelector('.n_amount') || (r.children[2] && r.children[2].querySelector('input'));
-                            const nameVal = inputName ? (inputName.value || '').trim() : (r.children[0]?.textContent || '').trim();
-                            const unitVal = inputUnit ? (inputUnit.value || '').trim() : (r.children[1]?.textContent || '').trim();
-                            let amtVal = inputAmount ? (inputAmount.value || '').trim() : (r.children[2]?.textContent || '').trim();
-                            if (!nameVal) return; // skip empty rows
-                            // try to convert amount to number when possible
-                            if (amtVal !== '') {
-                                const n = Number(amtVal);
-                                if (!Number.isNaN(n)) amtVal = n;
-                            } else {
-                                amtVal = '';
+                        // Get all columns from header
+                        const headers = tbl.querySelectorAll('thead th');
+                        const columns = [];
+                        headers.forEach((th, idx) => {
+                            const colText = th.textContent.trim().replace('×', '').trim();
+                            if (colText !== 'รายการ' && colText !== 'แอคชัน' && colText !== 'หน่วย') {
+                                columns.push({
+                                    index: idx,
+                                    name: colText,
+                                    className: 'n_col_' + colText
+                                });
                             }
-                            const obj = { name: nameVal, unit: unitVal, amount: amtVal };
+                        });
+                        
+                        rows.forEach(r => {
+                            const inputName = r.querySelector('.n_name');
+                            const inputUnit = r.querySelector('.n_unit');
+                            const nameVal = inputName ? (inputName.value || '').trim() : '';
+                            if (!nameVal) return; // skip empty rows
+                            
+                            const obj = {};
+                            obj.name = nameVal;
+                            
+                            // Add dynamic columns
+                            columns.forEach(col => {
+                                const colInput = r.querySelector(`.${col.className}`) || 
+                                                (r.children[col.index] && r.children[col.index].querySelector('input'));
+                                let colVal = colInput ? (colInput.value || '').trim() : '';
+                                // try to convert to number when possible
+                                if (colVal !== '') {
+                                    const n = Number(colVal);
+                                    if (!Number.isNaN(n)) colVal = n;
+                                }
+                                if (colVal !== '') {
+                                    obj[col.name] = colVal;
+                                }
+                            });
+                            
+                            const unitVal = inputUnit ? (inputUnit.value || '').trim() : '';
+                            if (unitVal) obj.unit = unitVal;
+                            
                             nutritional_value.push(obj);
                         });
                     }
@@ -185,6 +299,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
             }
+
+            // detect edit mode (edit.html opens with ?id=...)
+            const params = new URLSearchParams(window.location.search);
+            const editId = params.get('id');
 
             // merge with original plant: only send fields that have non-empty values to avoid overwriting
             // accepts (orig, updates) and returns merged object where `updates` override `orig` but empty strings do not overwrite

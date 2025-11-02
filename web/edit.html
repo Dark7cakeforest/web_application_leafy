@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Plant</title>
     <link rel="stylesheet" href="../src/style.css">
-    <link rel="stylesheet" href="../src/editform.css">
     <link rel="icon" type="image/x-icon" href="../src/favicon.ico">
 </head>
 <body>
@@ -62,6 +61,10 @@
 
                 <!-- existing nutritional display (populateEdit.js will fill this table) -->
                 <label>คุณค่าทางโภชนาการ</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" class="custom-checkbox" name="nutritional_text">เพิ่มข้อความ</label>
+                    <label><input type="checkbox" class="custom-checkbox" name="nutritional_table">เพิ่มตาราง</label>
+                </div>
                 <table class="nutritional_value"></table>
 
                 <div>

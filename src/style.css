@@ -185,31 +185,44 @@ a#detail:active{/*เอฟเฟกต์ตอนกดปุ่มราย�
     font-size: 35px;
     margin: 0;
 }
-p.plant-image{/*ถูกและผิดในบรรทัดเดียวกัน*/
-    width: 300px;
-    height: 300px;
-    margin: 10px 0 10px 0;
-    border-radius: 10px;
-    object-fit: cover;
+p.plant-name{
+    color: #A8DF11;
+    margin: 0 0 20px 0;
+}
+p.correct,p.not-correct{/*ถูกและผิดในบรรทัดเดียวกัน*/
+    margin: 0 30px 20px 30px;
+    font-size: 30px;
+    display: inline-block;
+}
+p.correct{/*สีfontถูก*/
+    color: #02542D;
+}
+p.not-correct{/*สีfontผิด*/
+    color: #da1717;
+}
+p.conclusion{/*ข้อความสรุปตัวเล็กเพื่อที่จะอยุ่บรรทัดเดียวกัน*/
+    font-size: 25px;
+    margin: 0 0 20px 0;
+    color: #EC221F;
 }
 /*ส่วนของในหน้า edit plant*/
-.edit-btn{
+.edit-btn{/*ปุ่มแก้ไขบนการ์ดที่แสดงพืช*/
     font-size: 30px;
-    margin: 0 0 10px 10px;
+    margin: 0 10px 10px 0;
     border: solid 1px #02542D;
     background-color: #BEF885;
     border-radius: 10px;
     color: #02542D;
 }
-.delete-btn{
+.delete-btn{/*ปุ่มลบบนการ์ดที่แสดงพืช*/
     font-size: 30px;
-    margin: 10px 0 0 10px;
+    margin: 0 0 10px 10px;
     border: solid 1px #da1717;
     background-color: #da1717;
     border-radius: 10px;
     color: #FFFFFF;
 }
-.add-btn {
+.add-btn {/*ปุ่มเพิ่มพืช*/
     font-size: 30px;
     margin: 10px auto;
     border: solid 1px #02542D;
@@ -334,7 +347,11 @@ body.modal-open { overflow: hidden; }
 .add-plant-form input[type="text"],
 .add-plant-form input[type="file"],
 .add-plant-form textarea,
-.add-plant-form select {
+.add-plant-form select,
+.editPlantForm input[type="text"],
+.editPlantForm input[type="file"],
+.editPlantForm textarea,
+.editPlantForm select {
   display: block;
   color: #02542D;
   font-size: 1.5rem;
@@ -345,14 +362,16 @@ body.modal-open { overflow: hidden; }
   border-radius: 7px; 
   box-sizing: border-box;
 }
-.add-plant-form textarea {
+.add-plant-form textarea ,
+.editPlantForm textarea{
     text-align: left;
     width: 100%;
     height: 100px;
     resize: vertical; /* ให้ปรับขนาดได้เฉพาะแนวตั้ง */
 }
 /* ทำให้ label อยู่ตรงกลาง */
-.add-plant-form label {/*ป้ายกำกับในฟอร์มเพิ่มพืช*/
+.add-plant-form label,
+.editPlantForm label {/*ป้ายกำกับในฟอร์มเพิ่มพืช*/
   display: block;
   color: #02542D;
   text-align: center;
@@ -362,7 +381,8 @@ body.modal-open { overflow: hidden; }
   width: 30%;
 }
 /* ตัว checkbox*/
-.checkbox-group {
+.checkbox-group ,
+.editPlantForm .checkbox-group {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -371,7 +391,8 @@ body.modal-open { overflow: hidden; }
   margin-left: 2rem;
   margin-right: 2rem;
 }
-.add-plant-form input[type="checkbox"] {
+.add-plant-form input[type="checkbox"] ,
+.editPlantForm input[type="checkbox"] {
   color: #02542D;
   font-size: 1.2rem;
   width: auto;
@@ -380,11 +401,13 @@ body.modal-open { overflow: hidden; }
   vertical-align: middle;
 }
 /* ทำให้ปุ่มอยู่ตรงกลาง */
-.add-plant-form > div {
+.add-plant-form > div ,
+.editPlantForm > div {
   text-align: center;
   margin-top: 0.75rem;
 }
-.add-plant-form button {
+.add-plant-form button ,
+.editPlantForm button {
   margin: 0 0.5rem;
 }
 /*ตกแต่งปุ่มส่งฟอร์มและล้างข้อมูลฟอร์ม*/
@@ -414,6 +437,152 @@ body.modal-open { overflow: hidden; }
 .form-delete-btn:hover {
   background-color: #a50f0f;
 }
+.editPlantForm {/*กล่องฟอร์มแก้ไขพืช*/
+    width: 90%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+    position: relative;
+}
+/* Nutritional table styling */
+.nutritional_value {
+    border-collapse: collapse;
+    margin: 1rem auto;
+    width: 90%;
+    max-width: 800px;
+    background-color: #f9f9f9;
+    border: 2px solid #02542D;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0px 3px 8px rgba(0,0,0,0.15);
+}
+
+.nutritional_value thead th {
+    background-color: #02542D;
+    color: #fff;
+    padding: 12px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.nutritional_value tbody td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ddd;
+    font-size: 15px;
+    color: #1B7D1E;
+}
+
+.nutritional_value tbody tr:hover {
+    background-color: #e6ffe6;
+}
+
+.nutritional_value tbody tr:nth-child(even) {
+    background-color: #f0f0f0;
+}
+
+.nutritional_value tbody tr:nth-child(even):hover {
+    background-color: #e6ffe6;
+}
+
+/* Editable nutritional table */
+.nutritional_table_edit {
+    border-collapse: collapse;
+    margin: 1rem auto;
+    width: 90%;
+    max-width: 800px;
+    background-color: #f9f9f9;
+    border: 2px solid #02542D;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0px 3px 8px rgba(0,0,0,0.15);
+}
+
+.nutritional_table_edit thead th {
+    background-color: #1B7D1E;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.nutritional_table_edit tbody td {
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+.nutritional_table_edit tbody tr:hover {
+    background-color: #e6ffe6;
+}
+
+.nutritional_table_edit tbody input {
+    width: 90%;
+    padding: 5px;
+    border: 1px solid #02542D;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #1B7D1E;
+}
+
+.nutritional_table_edit tbody input:focus {
+    outline: none;
+    border-color: #1B7D1E;
+    box-shadow: 0 0 3px rgba(27,125,30,0.3);
+}
+
+.nutritional_table_edit button.rm,
+.nutritional_table_edit button[type="button"] {
+    background-color: #da1717;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.nutritional_table_edit button.rm:hover,
+.nutritional_table_edit button[type="button"]:hover {
+    background-color: #a50f0f;
+}
+
+/* Nutritional wrapper */
+#nutritional_table_wrapper {
+    margin: 1rem 0;
+    width: 90%;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#nutritional_table_wrapper .checkbox-group {
+    margin-bottom: 1rem;
+}
+
+#nutritional_table_wrapper textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #02542D;
+    border-radius: 5px;
+    font-size: 15px;
+    color: #1B7D1E;
+    resize: vertical;
+}
+
+#nutritional_table_edit_container {
+    margin-top: 1rem;
+}
+
+#nutritional_table_edit_container button[type="button"] {
+    margin: 0.5rem 0.25rem;
+    font-size: 14px;
+    padding: 8px 16px;
+}
+
 /*ส่วนของหน้า feedback*/
 /* ข้อความ p อธิบาย */
 .explain {
@@ -439,7 +608,7 @@ body.modal-open { overflow: hidden; }
     color: #fff;                /* ตัวอักษรสีขาว */
     padding: 12px;
     text-align: center;
-    font-size: 16px;
+    font-size: 25px;
 }
 
 /* แถวข้อมูล */
@@ -447,7 +616,7 @@ body.modal-open { overflow: hidden; }
     padding: 10px;
     text-align: center;
     border: 1px solid #ddd;
-    font-size: 15px;
+    font-size: 20px;
 }
 
 /* ทำให้เวลาชี้แถวมีสี */

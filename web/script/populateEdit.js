@@ -79,63 +79,65 @@ document.addEventListener('DOMContentLoaded', async () => {
     // expose parsed nutritional array for addPlant to reuse/merge
     window.__originalPlant = { ...plant, nutritional_value: nut };
 
+    // Get all unique keys from nutritional data (excluding 'name' and 'unit')
+    const getAllKeys = (arr) => {
+      const keys = new Set();
+      arr.forEach(item => {
+        if (item && typeof item === 'object') {
+          Object.keys(item).forEach(k => {
+            if (k !== 'name' && k !== 'unit') keys.add(k);
+          });
+        }
+      });
+      return Array.from(keys);
+    };
 
-    // Create editable controls wrapper; reuse ids used by addPlant.js so collection logic can find them
-    // If a wrapper already exists (from addPlant.js or previous run), reuse it.
-    let tableWrapper = document.getElementById('nutritional_table_wrapper');
-    if (!tableWrapper) {
-      tableWrapper = document.createElement('div');
-      tableWrapper.id = 'nutritional_table_wrapper';
-      tableWrapper.style.marginTop = '0.5rem';
+    // Get existing checkbox-group from HTML
+    const checkboxGroup = document.querySelector('.checkbox-group');
+    if (!checkboxGroup) {
+      console.error('checkbox-group not found in HTML');
+      return;
     }
 
-    // header controls for edit page: use same checkbox names as add form so addPlant.js responds
-    const controls = document.createElement('div');
-    controls.className = 'checkbox-group';
-    controls.innerHTML = `
-      <label><input type="checkbox" name="nutritional_text" id="texting_cb">เพิ่มใส่ข้อความ</label>
-      <label><input type="checkbox" name="nutritional_table" id="table_cb">เพิ่มแถวตาราง</label>
-    `;
-    // remove any previous similar control to avoid duplicates
-    const prevControls = tableWrapper.querySelector('.checkbox-group');
-    if (prevControls) prevControls.remove();
-    tableWrapper.appendChild(controls);
-
-    // textarea for textual nutrition (hidden unless checked) - ensure single element
-    let textArea = document.getElementById('nutritional_textarea_edit');
-    if (!textArea) {
-      textArea = document.createElement('textarea');
-      textArea.id = 'nutritional_textarea_edit';
-      textArea.rows = 3;
-      textArea.placeholder = 'พิมพ์คำอธิบายทางโภชนาการที่นี่...';
-    }
-    textArea.style.display = 'none';
-    // move/remove existing and append
-    if (textArea.parentNode !== tableWrapper) tableWrapper.appendChild(textArea);
-
-    // editable table container (used by edit UI)
-    let editTableContainer = document.getElementById('nutritional_table_edit_container');
-    if (!editTableContainer) {
-      editTableContainer = document.createElement('div');
-      editTableContainer.id = 'nutritional_table_edit_container';
-    }
-    editTableContainer.style.display = 'none';
-    if (editTableContainer.parentNode !== tableWrapper) tableWrapper.appendChild(editTableContainer);
-
-    // helper: render existing nutrition as a simple table (read-only) and also prepare editable defaults
+    // helper: render existing nutrition as a table (read-only) with dynamic columns
     const renderExistingAsReadOnly = () => {
       const existingTable = document.querySelector('.nutritional_value');
       if (!existingTable) return;
-      // Build header
-      // determine variants (additional keys) — but we will keep simple 3-col view (name/unit/amount)
-      let html = '<thead><tr><th>รายการ</th><th>หน่วย</th><th>amount</th></tr></thead><tbody>';
-      nut.forEach(item => {
+
+      // Separate description entries from regular data
+      const descEntries = nut.filter(x => x && typeof x === 'object' && Object.keys(x).includes('คำอธิบาย'));
+      const dataEntries = nut.filter(x => !(x && typeof x === 'object' && Object.keys(x).includes('คำอธิบาย')));
+      
+      // Get unique columns from data
+      const additionalKeys = getAllKeys(dataEntries);
+      
+      // Build header: name first, then numeric columns, unit last
+      let html = '<thead><tr><th>รายการ</th>';
+      additionalKeys.forEach(k => {
+        html += `<th>${k}</th>`;
+      });
+      html += '<th>หน่วย</th></tr></thead><tbody>';
+      
+      // Add description rows first if they exist
+      descEntries.forEach(desc => {
+        const descKey = Object.keys(desc).find(k => k === 'คำอธิบาย');
+        if (descKey) {
+          html += '<tr>';
+          html += `<td>${descKey}</td>`;
+          html += `<td colspan="${additionalKeys.length + 1}">${desc[descKey]}</td>`;
+          html += '</tr>';
+        }
+      });
+      
+      // Add data rows
+      dataEntries.forEach(item => {
         html += '<tr>';
         html += `<td>${item.name ?? ''}</td>`;
+        // Add numeric columns in middle
+        additionalKeys.forEach(k => {
+          html += `<td>${item[k] ?? ''}</td>`;
+        });
         html += `<td>${item.unit ?? ''}</td>`;
-        // find numeric-like value (amount) — try common keys 'amount', 'value'
-        const amt = item.amount ?? item.value ?? '';
-        html += `<td>${amt}</td>`;
         html += '</tr>';
       });
       html += '</tbody>';
@@ -144,113 +146,194 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     renderExistingAsReadOnly();
 
-    // editable table implementation: simple 3-column editor with add/remove row
+    // editable table container
+    let editTableContainer = document.getElementById('nutritional_table_edit_container');
+    if (!editTableContainer) {
+      editTableContainer = document.createElement('div');
+      editTableContainer.id = 'nutritional_table_edit_container';
+      editTableContainer.style.display = 'none';
+      const form = document.querySelector('.add-plant-form');
+      const buttonDiv = form?.querySelector('.form-add-btn')?.closest('div');
+      if (form && buttonDiv && buttonDiv.parentNode) {
+        buttonDiv.parentNode.insertBefore(editTableContainer, buttonDiv);
+      } else if (form) {
+        form.appendChild(editTableContainer);
+      }
+    }
+
+    // editable table implementation with dynamic columns
     const renderEditableTable = () => {
       editTableContainer.innerHTML = '';
+      
       const tbl = document.createElement('table');
       tbl.className = 'nutritional_table_edit';
       const thead = document.createElement('thead');
-      thead.innerHTML = '<tr><th>รายการ (name)</th><th>หน่วย (unit)</th><th>amount</th><th>แอคชัน</th></tr>';
-      tbl.appendChild(thead);
       const tb = document.createElement('tbody');
-      // preload with two empty rows
+      
+      // Get existing columns from data
+      const additionalKeys = getAllKeys(nut);
+      
+      // Build header
+      let headerHtml = '<tr><th>รายการ</th>';
+      additionalKeys.forEach(k => {
+        headerHtml += `<th>${k}<button class="rm-col" data-col="${k}">×</button></th>`;
+      });
+      headerHtml += '<th>หน่วย</th><th>แอคชัน</th></tr>';
+      thead.innerHTML = headerHtml;
+      tbl.appendChild(thead);
+      
+      // Preload with two empty rows
       for (let i = 0; i < 2; i++) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td><input class="n_name" /></td><td><input class="n_unit" /></td><td><input class="n_amount" type="number" step="any" /></td><td><button class="rm">ลบ</button></td>`;
+        let rowHtml = '<td><input type="text" class="n_name" /></td>';
+        additionalKeys.forEach(k => {
+          rowHtml += `<td><input type="text" class="n_col_${k}" /></td>`;
+        });
+        rowHtml += '<td><input type="text" class="n_unit" /></td>';
+        rowHtml += '<td><button class="rm">ลบ</button></td>';
+        tr.innerHTML = rowHtml;
         tb.appendChild(tr);
       }
       tbl.appendChild(tb);
+      editTableContainer.appendChild(tbl);
+      
+      // Button controls
+      const btnContainer = document.createElement('div');
+      btnContainer.style.textAlign = 'center';
+      btnContainer.style.marginTop = '0.5rem';
+      
       const addRowBtn = document.createElement('button');
       addRowBtn.type = 'button';
       addRowBtn.textContent = 'เพิ่มแถว';
+      addRowBtn.style.margin = '0 0.25rem';
+      
+      const addColBtn = document.createElement('button');
+      addColBtn.type = 'button';
+      addColBtn.textContent = 'เพิ่มคอลัมน์';
+      addColBtn.style.margin = '0 0.25rem';
+      
+      btnContainer.appendChild(addRowBtn);
+      btnContainer.appendChild(addColBtn);
+      editTableContainer.appendChild(btnContainer);
+      
+      // Add row handler
       addRowBtn.addEventListener('click', () => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td><input class="n_name" /></td><td><input class="n_unit" /></td><td><input class="n_amount" type="number" step="any" /></td><td><button class="rm">ลบ</button></td>`;
+        let rowHtml = '<td><input type="text" class="n_name" /></td>';
+        additionalKeys.forEach(k => {
+          rowHtml += `<td><input type="text" class="n_col_${k}" /></td>`;
+        });
+        rowHtml += '<td><input type="text" class="n_unit" /></td>';
+        rowHtml += '<td><button class="rm">ลบ</button></td>';
+        tr.innerHTML = rowHtml;
         tb.appendChild(tr);
       });
-      editTableContainer.appendChild(tbl);
-      editTableContainer.appendChild(addRowBtn);
-
-      // delegate remove (ensure single handler)
+      
+      // Add column handler
+      addColBtn.addEventListener('click', () => {
+        const colName = prompt('ชื่อคอลัมน์ใหม่:');
+        if (!colName || colName.trim() === '') return;
+        const trimmedName = colName.trim();
+        if (additionalKeys.includes(trimmedName)) {
+          alert('มีคอลัมน์นี้อยู่แล้ว');
+          return;
+        }
+        additionalKeys.push(trimmedName);
+        
+        // Update header
+        const headerRow = thead.querySelector('tr');
+        const secondToLast = headerRow.children[headerRow.children.length - 2];
+        const newHeader = document.createElement('th');
+        newHeader.innerHTML = `${trimmedName}<button class="rm-col" data-col="${trimmedName}">×</button>`;
+        headerRow.insertBefore(newHeader, secondToLast);
+        
+        // Add column to all rows
+        tb.querySelectorAll('tr').forEach(tr => {
+          const secondToLast = tr.children[tr.children.length - 2];
+          const newCell = document.createElement('td');
+          const inp = document.createElement('input');
+          inp.type = 'text';
+          inp.className = `n_col_${trimmedName}`;
+          newCell.appendChild(inp);
+          tr.insertBefore(newCell, secondToLast);
+        });
+      });
+      
+      // Remove row handler (delegate)
       editTableContainer.addEventListener('click', (ev) => {
-        if (ev.target && ev.target.classList && ev.target.classList.contains('rm')) {
+        if (ev.target && ev.target.classList.contains('rm')) {
           const row = ev.target.closest('tr');
-          if (row) row.remove();
+          if (row && tb.querySelectorAll('tr').length > 1) {
+            row.remove();
+          } else {
+            alert('ต้องมีอย่างน้อย 1 แถว');
+          }
+        } else if (ev.target && ev.target.classList.contains('rm-col')) {
+          const colName = ev.target.getAttribute('data-col');
+          if (!colName || colName === 'name' || colName === 'unit') {
+            alert('ไม่สามารถลบคอลัมน์นี้ได้');
+            return;
+          }
+          const index = additionalKeys.indexOf(colName);
+          if (index > -1) additionalKeys.splice(index, 1);
+          
+          // Remove column header
+          const headerRow = thead.querySelector('tr');
+          headerRow.querySelectorAll('th').forEach(th => {
+            if (th.textContent.includes(colName)) th.remove();
+          });
+          
+          // Remove column from all rows
+          tb.querySelectorAll('tr').forEach(tr => {
+            tr.querySelectorAll('td').forEach((td, idx) => {
+              const inp = td.querySelector(`.n_col_${colName}`);
+              if (inp) td.remove();
+            });
+          });
         }
       });
     };
 
-    // hook checkboxes
-    // When controls change, toggle textarea/table. Also check/uncheck the equivalent checkboxes
-    controls.querySelector('#texting_cb').addEventListener('change', (e) => {
-      const checked = e.target.checked;
-      textArea.style.display = checked ? 'block' : 'none';
+    // Hook existing checkboxes
+    const textCb = checkboxGroup.querySelector('input[name="nutritional_text"]');
+    const tableCb = checkboxGroup.querySelector('input[name="nutritional_table"]');
 
-      // insert two rows under the read-only nutritional_value table: first row key (คำอธิบาย) readonly, second row value editable
-      const existingTable = document.querySelector('.nutritional_value');
-      // remove previous helper rows if present
-      const prevKeyRow = existingTable?.querySelector('tr[data-desc-key]');
-      const prevValRow = existingTable?.querySelector('tr[data-desc-val]');
-      if (prevKeyRow) prevKeyRow.remove();
-      if (prevValRow) prevValRow.remove();
+    if (textCb) {
+      textCb.addEventListener('change', (e) => {
+        const checked = e.target.checked;
+        
+        // Insert description rows into read-only table
+        const existingTable = document.querySelector('.nutritional_value');
+        const prevKeyRow = existingTable?.querySelector('tr[data-desc-key]');
+        const prevValRow = existingTable?.querySelector('tr[data-desc-val]');
+        if (prevKeyRow) prevKeyRow.remove();
+        if (prevValRow) prevValRow.remove();
 
-      if (checked && existingTable) {
-        // ensure tbody exists
-        let tb = existingTable.querySelector('tbody');
-        if (!tb) {
-          tb = document.createElement('tbody');
-          existingTable.appendChild(tb);
+        if (checked && existingTable) {
+          let tb = existingTable.querySelector('tbody');
+          if (!tb) {
+            tb = document.createElement('tbody');
+            existingTable.appendChild(tb);
+          }
+          const keyTr = document.createElement('tr');
+          keyTr.setAttribute('data-desc-key', '1');
+          const additionalKeys = getAllKeys(nut);
+          keyTr.innerHTML = `<td>คำอธิบาย</td><td colspan="${additionalKeys.length + 1}"></td>`;
+          const valTr = document.createElement('tr');
+          valTr.setAttribute('data-desc-val', '1');
+          const existingDesc = (nut.find(x => x && typeof x === 'object' && Object.keys(x).includes('คำอธิบาย')) || {})['คำอธิบาย'] || '';
+          valTr.innerHTML = `<td colspan="${additionalKeys.length + 2}"><input id="nutritional_textarea_edit_input" type="text" placeholder="${existingDesc}" value="" style="width:100%" /></td>`;
+          tb.appendChild(keyTr);
+          tb.appendChild(valTr);
         }
-        // key row (non-editable)
-        const keyTr = document.createElement('tr');
-        keyTr.setAttribute('data-desc-key', '1');
-        keyTr.innerHTML = `<td>คำอธิบาย</td><td colspan="2"></td>`;
-        // value row (editable input spanning columns)
-        const valTr = document.createElement('tr');
-        valTr.setAttribute('data-desc-val', '1');
-        const existingDesc = (nut.find(x => x && typeof x === 'object' && Object.keys(x).includes('คำอธิบาย')) || {})['คำอธิบาย'] || '';
-        valTr.innerHTML = `<td colspan="3"><input id="nutritional_textarea_edit_input" type="text" placeholder="${existingDesc}" value="" style="width:100%" /></td>`;
-        tb.appendChild(keyTr);
-        tb.appendChild(valTr);
-
-        // ensure regular textarea mirrors input (for addPlant's lookup of textarea id too)
-        textArea.style.display = 'none';
-      }
-
-      // keep a hidden checkbox with name nutritional_text in the DOM so addPlant.js can detect it
-      let cb = document.querySelector('input[name="nutritional_text"]');
-      if (!cb) {
-        cb = document.createElement('input'); cb.type = 'checkbox'; cb.name = 'nutritional_text'; cb.style.display = 'none';
-        tableWrapper.appendChild(cb);
-      }
-      cb.checked = checked;
-    });
-    controls.querySelector('#table_cb').addEventListener('change', (e) => {
-      editTableContainer.style.display = e.target.checked ? 'block' : 'none';
-      if (e.target.checked) renderEditableTable();
-      // create hidden checkbox nutritional_table for addPlant detection
-      let cb = document.querySelector('input[name="nutritional_table"]');
-      if (!cb) {
-        cb = document.createElement('input'); cb.type = 'checkbox'; cb.name = 'nutritional_table'; cb.style.display = 'none';
-        tableWrapper.appendChild(cb);
-      }
-      cb.checked = e.target.checked;
-    });
-
-    // If original JSON contains a "คำอธิบาย" object, show it in placeholder
-    const descObj = nut.find(x => x && typeof x === 'object' && Object.keys(x).includes('คำอธิบาย'));
-    if (descObj) {
-      textArea.placeholder = descObj['คำอธิบาย'] || textArea.placeholder;
+      });
     }
 
-    // insert tableWrapper right after the nutritional_value table
-    const existingTable = document.querySelector('.nutritional_value');
-    if (existingTable && existingTable.parentNode) {
-      existingTable.parentNode.insertBefore(tableWrapper, existingTable.nextSibling);
-    } else {
-      // fallback: append to form
-      const form = document.querySelector('.add-plant-form');
-      if (form) form.appendChild(tableWrapper);
+    if (tableCb) {
+      tableCb.addEventListener('change', (e) => {
+        editTableContainer.style.display = e.target.checked ? 'block' : 'none';
+        if (e.target.checked) renderEditableTable();
+      });
     }
   } catch (err) {
     console.error('populateEdit error:', err);
