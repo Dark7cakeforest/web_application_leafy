@@ -5,3 +5,4 @@ node_modules/.bin/nodemon.cmd
 /node_modules
 api/databasepassword
 api/databasepassword.env
+api/.env
