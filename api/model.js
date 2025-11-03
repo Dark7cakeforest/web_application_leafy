@@ -4,7 +4,7 @@ const fs = require('fs');
 const FormData = require('form-data');
 
 // URL ของ Python Server
-const PYTHON_SERVER_URL = 'http://127.0.0.1:5000/predict'; 
+const PYTHON_SERVER_URL = process.env.PYTHON_SERVER_URL || 'http://127.0.0.1:5000/predict';
 
 function setupModelRoutes(app, connection, upload) {
 
@@ -65,7 +65,7 @@ function setupModelRoutes(app, connection, upload) {
                 confidence: confidence,
                 plant_info: {
                     name: vegRows[0].name,
-                    leaf_image_url: `http://127.0.0.1:3001/${vegRows[0].image_leaf_path.replace('../src/', '')}`
+                    leaf_image_url: `http://127.0.0.1:3001/${vegRows[0].image_leaf_path.replace('../src/', '')}` || process.env.BASE_URL
                 }
             });
 
@@ -107,7 +107,7 @@ function setupModelRoutes(app, connection, upload) {
                 return res.status(404).json({ error: 'Plant details not found.' });
             }
             const plantData = rows[0];
-            plantData.image_leaf_url = `http://127.0.0.1:3001/${plantData.image_leaf_path.replace('../src/', '')}`;
+            plantData.image_leaf_url = `http://127.0.0.1:3001/${plantData.image_leaf_path.replace('../src/', '')}` || process.env.BASE_URL;
             res.json({ success: true, details: plantData });
         } catch (err) {
             console.error('Error fetching plant details:', err);

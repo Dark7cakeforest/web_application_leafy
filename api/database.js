@@ -1,9 +1,11 @@
+require('dotenv').config();
+const dotenv = require('dotenv');
 const { setupModelRoutes } = require('./model.js');
 const bodyParser = require('body-parser');
 const express = require('express');
 const mysql = require('mysql2/promise');
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
@@ -71,14 +73,18 @@ app.use(cors({
 app.use('/images', express.static(imagesDir));//หน้า images ให้เป็น static folder
 
 const connection = mysql.createPool({//สร้างตัวเชื่อมฐานข้อมูล
-    host: "localhost",
-    user: "root",
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
     password: databasepassword,
-    database: "app_database",
+    database: process.env.DB_NAME,
     dateStrings: true,
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    ssl: {
+        ca: fs.readFileSync(path.join(__dirname, process.env.CA)),
+        rejectUnauthorized: true
+    }
 });
 
 console.log("Connected to MySQL Successfully.");
@@ -102,7 +108,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ status: "Failed To Login", message: "Invalid username or password" });
     }
 
-    const token = jwt.sign({ id: user.user_id, is_guest: user.is_guest }, "your_secret", { expiresIn: "1h" });
+    const token = jwt.sign({ id: user.user_id, is_guest: user.is_guest }, process.env.JWT_SECRET || "your_secret", { expiresIn: "1h" });
     return res.json({ status: "ok", message: "Login success", accessToken: token });
   } catch (err) {
     console.error("Error in /api/login:", err);
