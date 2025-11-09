@@ -7,3 +7,4 @@ api/databasepassword
 api/databasepassword.env
 api/.env
 cert/isrgrootx1.pem
+.python-version
