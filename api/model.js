@@ -4,7 +4,7 @@ const fs = require('fs');
 const FormData = require('form-data');
 
 // URL ของ Python Server
-const PYTHON_SERVER_URL = 'http://127.0.0.1:5000/predict'; 
+const PYTHON_SERVER_URL = 'http://127.0.0.1:5000/predict';
 
 function setupModelRoutes(app, connection, upload) {
 
@@ -24,8 +24,12 @@ function setupModelRoutes(app, connection, upload) {
             const form = new FormData();
             form.append('image', fs.createReadStream(imagePath));
             const response = await axios.post(PYTHON_SERVER_URL, form, { headers: form.getHeaders() });
-            const { predicted_index, confidence, class_label } = response.data;
+            const { predicted_index, confidence, class_label, scores, timestamp } = response.data;
+            if (Array.isArray(scores)) {
+                console.log('AI prediction scores:', scores, 'timestamp:', timestamp);
+            }
             const classId = predicted_index + 1; // แปลง index (0-9) เป็น class_id (1-10)
+            const allResultsJson = Array.isArray(scores) ? JSON.stringify(scores) : null;
 
             // Step 2: สร้าง Guest User และบันทึกการอัปโหลด
             const insertUserQuery = "INSERT INTO users (is_guest) VALUES (true)";
@@ -40,8 +44,8 @@ function setupModelRoutes(app, connection, upload) {
 
             // Step 3: บันทึกผลลัพธ์ลงตาราง ai_results 
             const [aiResult] = await connection.query(
-                "INSERT INTO ai_results (upload_id, class_id, confidence_score, processed_time) VALUES (?, ?, ?, NOW())",
-                [uploadId, classId, confidence]
+                "INSERT INTO ai_results (upload_id, class_id, confidence_score, processed_time, all_results) VALUES (?, ?, ?, NOW(), ?)",
+                [uploadId, classId, confidence, allResultsJson]
             );
             const resultId = aiResult.insertId;
 
@@ -63,6 +67,7 @@ function setupModelRoutes(app, connection, upload) {
                 class_id: classId,
                 class_label: class_label,
                 confidence: confidence,
+                all_results: Array.isArray(scores) ? scores : null,
                 plant_info: {
                     name: vegRows[0].name,
                     leaf_image_url: `http://127.0.0.1:3001/${vegRows[0].image_leaf_path.replace('../src/', '')}`

@@ -13,6 +13,7 @@ header{/*navภาพรวม*/
     top: 0;
     border-bottom: solid #02542D 2px;
     background-color: #CCFBD4;
+    z-index: 1000;
 }
 .headbar{/*ในส่วน nav เชื่อมไปยังหน้าต่าง ๆ*/
     display: flex;
@@ -110,6 +111,33 @@ a#Logout{/*ปุ่มออกจากระบบ*/
     justify-content: center;
     align-items: center;
     text-align: center;
+}
+.pagination{
+    display: none;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+    margin-top: 12px;
+}
+.pagination button{
+    padding: 4px 10px;
+    border: 1px solid #02542D;
+    background-color: #ffffff;
+    color: #02542D;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.pagination button.active,
+.pagination button:hover:not(:disabled){
+    background-color: #02542D;
+    color: #ffffff;
+}
+.pagination button:disabled{
+    opacity: 0.5;
+    cursor: default;
+}
+.edit-page-container{
+    margin-top: 120px;
 }
 .contentsearch{/*ตัวเนื้อหาใน container*/
     margin-top: 80px;
@@ -655,7 +683,7 @@ body.modal-open { overflow: hidden; }
     background-color: #045007;
 }
 /*สถานะตอนที่ค้นหาไม่เจอ*/
-#status{
+#status,#status2{
     font-size: 20px;
     color: #02542D;
     margin-top: 20px;
