@@ -15,6 +15,11 @@
     .btn-edit { background: #02542D; color: #fff; }
     .btn-save { background: #2e7d32; color: #fff; }
     .btn-cancel { background: #da1717; color: #fff; margin-left: 6px; }
+    .btn-prob { background: #03a557; color: #fff;}
+    .probability-wrapper { margin-bottom: 10px; }
+    .probability-panel { margin-top: 10px; margin-bottom: 10px; background: #f1f8e9; border: 1px solid #02542D; border-radius: 8px; padding: 12px; text-align: left; display: none; }
+    .probability-list { margin: 0; padding-left: 20px; }
+    .probability-empty { margin: 0; color: #555; }
   </style>
 </head>
 <body>
@@ -27,6 +32,14 @@
       <p><b>วันที่:</b> <span id="dateText">-</span> &nbsp;<b>เวลา:</b> <span id="timeText">-</span></p>
       <p><b>ผลลัพธ์การทำนายของโมเดล:</b> <span id="confText">-</span></p>
       <p><b>ผลการให้คะแนนจากผู้ใช้งาน:</b> <span id="scoreText">-</span></p>
+
+      <div class="probability-wrapper">
+        <button id="toggleProbBtn" class="btn btn-prob" type="button" aria-expanded="false">ความน่าจะเป็นของการประมวลผลอื่น ๆ</button>
+        <div id="probabilityPanel" class="probability-panel">
+          <p id="probabilityEmpty" class="probability-empty" style="display:none;">ไม่มีการบันทึกความน่าจะเป็นอื่น ๆ</p>
+          <ol id="probabilityList" class="probability-list"></ol>
+        </div>
+      </div>
 
       <div>
         <button id="editBtn" class="btn btn-edit">แก้ไขผลการให้คะแนน</button>
@@ -49,25 +62,54 @@
 
 <script>
   const params = new URLSearchParams(window.location.search);
-  const resultId = params.get("result_id");
+  const resultId = params.has('result_id') ? decodeURIComponent(params.get('result_id')) : null;
+  console.log('detail page resultId:', resultId);
+
+  const probToggleBtn = document.getElementById('toggleProbBtn');
+  const probPanel = document.getElementById('probabilityPanel');
+  const probList = document.getElementById('probabilityList');
+  const probEmpty = document.getElementById('probabilityEmpty');
+
+  probToggleBtn.addEventListener('click', () => {
+    const expanded = probToggleBtn.getAttribute('aria-expanded') === 'true';
+    probToggleBtn.setAttribute('aria-expanded', (!expanded).toString());
+    probPanel.style.display = expanded ? 'none' : 'block';
+  });
 
   if (!resultId) {
     alert('ไม่พบ result_id');
   } else {
-  fetch(`/api/result_detail?result_id=${resultId}`)
-      .then(r => r.json())
+  fetch(`/api/result_detail?result_id=${encodeURIComponent(resultId)}`)
+      .then(async response => {
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          const errMsg = data.error || response.statusText || 'Failed to load detail';
+          throw new Error(errMsg);
+        }
+        return response.json();
+      })
       .then(d => {
+        console.log('detail payload:', d);
         const r = d.result;
-        document.getElementById('title').textContent = r.class_label || 'รายละเอียดพืช';
+        if (!r) throw new Error('Result payload missing');
+        document.getElementById('title').textContent = r.plant_name || r.class_label || 'รายละเอียดพืช';
         const img = document.getElementById('plant-img');
-        img.src = r.image_path ? r.image_path : '../src/images/kaprao.jpg'; // fallback
+        const fallback = '../src/images/kaprao.jpg';
+        let imgSrc = fallback;
+        if (r.image_path) {
+          if (r.image_path.startsWith('http')) {
+            imgSrc = r.image_path;
+          } else {
+            const normalized = r.image_path.replace(/^\.\/?/, '');
+            imgSrc = normalized.startsWith('/') ? normalized : `/${normalized}`;
+          }
+        }
+        img.src = imgSrc;
 
-        // แยกวันที่/เวลา — normalize possible ISO format with 'T' and trailing 'Z'
+        // แยกวันที่/เวลา
         let pt = r.processed_time || '';
-        // remove fractional seconds and trailing Z if present e.g. 2025-08-22T03:20:00.000Z -> 2025-08-22T03:20:00
         pt = pt.replace(/\.\d+Z$/, '');
         pt = pt.replace(/Z$/, '');
-        // accept either 'T' or space as separator; normalize to single space
         pt = pt.replace('T', ' ');
         const parts = pt.split(' ');
         document.getElementById('dateText').textContent = parts[0] || '-';
@@ -90,11 +132,26 @@
           if (String(r.is_correct) === rd.value) rd.checked = true;
         });
 
+        // แสดงความน่าจะเป็นอื่น ๆ
+        const probabilities = Array.isArray(r.probabilities) ? r.probabilities : [];
+        if (!probabilities.length) {
+          probEmpty.style.display = 'block';
+          probList.style.display = 'none';
+        } else {
+          probEmpty.style.display = 'none';
+          probList.style.display = 'block';
+          probList.innerHTML = probabilities.map(item => {
+            const name = item.display_name || item.class_label || `Class ${item.class_id}`;
+            const percent = (Number(item.score || 0) * 100).toFixed(5);
+            return `<li>${name} ${percent}%</li>`;
+          }).join('');
+        }
+
         // ปุ่มแก้ไข/ยกเลิก/บันทึก
         const box = document.getElementById('editBox');
         document.getElementById('editBtn').onclick = () => box.style.display = 'block';
         document.getElementById('cancelBtn').onclick = () => box.style.display = 'none';
-          document.getElementById('saveBtn').onclick = async () => {
+        document.getElementById('saveBtn').onclick = async () => {
             const sel = document.querySelector('input[name="iscorrect"]:checked');
             if (!sel) { alert('กรุณาเลือก ค่าความถูกต้อง หรือ ผิด'); return; }
             const val = Number(sel.value);
@@ -115,8 +172,14 @@
               }
               await res.json();
               alert('บันทึกข้อมูลสำเร็จ');
-              // อัพเดทหน้าจอให้แสดงค่าที่แก้ไข
               document.getElementById('scoreText').textContent = (val === 1 ? 'ถูกต้อง' : 'ผิด');
+              if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem('LIST_FORCE_REFRESH', '1');
+                sessionStorage.setItem('LIST_CORRECTION_PATCH', JSON.stringify({
+                  resultId: resultId,
+                  is_correct: val
+                }));
+              }
               box.style.display = 'none';
             } catch (err) {
               console.error(err);
@@ -125,9 +188,21 @@
           };
       })
       .catch(err => {
-        console.error(err);
+        console.error('result detail error:', err);
         alert('ไม่พบข้อมูลรายละเอียด');
       });
+  }
+
+  const backLink = document.querySelector('.back-btn');
+  if (backLink) {
+    backLink.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      if (document.referrer && document.referrer.includes('list.html')) {
+        window.history.back();
+      } else {
+        window.location.href = 'list.html';
+      }
+    });
   }
 </script>
 

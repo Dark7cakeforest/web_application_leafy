@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       arr.forEach(item => {
         if (item && typeof item === 'object') {
           Object.keys(item).forEach(k => {
-            if (k !== 'name' && k !== 'unit') keys.add(k);
+            if (k !== 'name' && k !== 'unit' && k !== 'คำอธิบาย') keys.add(k);
           });
         }
       });
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const tb = document.createElement('tbody');
       
       // Get existing columns from data
-      const additionalKeys = getAllKeys(nut);
+      const additionalKeys = getAllKeys(dataEntries);
       
       // Build header
       let headerHtml = '<tr><th>รายการ</th>';
@@ -182,8 +182,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       thead.innerHTML = headerHtml;
       tbl.appendChild(thead);
       
-      // Preload with two empty rows
-      for (let i = 0; i < 2; i++) {
+      const sanitize = (val) => String(val ?? '').replace(/"/g, '&quot;');
+
+      // Preload with existing values
+      if (dataEntries.length > 0) {
+        dataEntries.forEach(item => {
+          const tr = document.createElement('tr');
+          let rowHtml = `<td><input type="text" class="n_name" value="${sanitize(item.name)}"/></td>`;
+          additionalKeys.forEach(k => {
+            const val = sanitize(item[k]);
+            rowHtml += `<td><input type="text" class="n_col_${k}" value="${val}"/></td>`;
+          });
+          rowHtml += `<td><input type="text" class="n_unit" value="${sanitize(item.unit)}"/></td>`;
+          rowHtml += '<td><button class="rm">ลบ</button></td>';
+          tr.innerHTML = rowHtml;
+          tb.appendChild(tr);
+        });
+      }
+
+      // Ensure at least two blank rows are available
+      while (tb.children.length < 2) {
         const tr = document.createElement('tr');
         let rowHtml = '<td><input type="text" class="n_name" /></td>';
         additionalKeys.forEach(k => {
@@ -216,6 +234,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       btnContainer.appendChild(addColBtn);
       editTableContainer.appendChild(btnContainer);
       
+      const syncAddColState = () => {
+        addColBtn.disabled = additionalKeys.length >= 5;
+      };
+      syncAddColState();
+      
       // Add row handler
       addRowBtn.addEventListener('click', () => {
         const tr = document.createElement('tr');
@@ -234,6 +257,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const colName = prompt('ชื่อคอลัมน์ใหม่:');
         if (!colName || colName.trim() === '') return;
         const trimmedName = colName.trim();
+        if (trimmedName === 'คำอธิบาย') {
+          alert('ไม่สามารถเพิ่มได้กรุณาใช้ชื่อคอลัมน์อื่น');
+          return;
+        }
+        if (additionalKeys.length >= 5) {
+          alert('ไม่สามารถเพิ่มคอลัมน์ได้มากกว่า 5 คอลัมน์');
+          return;
+        }
         if (additionalKeys.includes(trimmedName)) {
           alert('มีคอลัมน์นี้อยู่แล้ว');
           return;
@@ -257,6 +288,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           newCell.appendChild(inp);
           tr.insertBefore(newCell, secondToLast);
         });
+        syncAddColState();
       });
       
       // Remove row handler (delegate)
@@ -290,6 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               if (inp) td.remove();
             });
           });
+          syncAddColState();
         }
       });
     };
@@ -301,8 +334,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (textCb) {
       textCb.addEventListener('change', (e) => {
         const checked = e.target.checked;
-        
-        // Insert description rows into read-only table
         const existingTable = document.querySelector('.nutritional_value');
         const prevKeyRow = existingTable?.querySelector('tr[data-desc-key]');
         const prevValRow = existingTable?.querySelector('tr[data-desc-val]');
@@ -317,16 +348,34 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
           const keyTr = document.createElement('tr');
           keyTr.setAttribute('data-desc-key', '1');
-          const additionalKeys = getAllKeys(nut);
+          const additionalKeys = getAllKeys(dataEntries);
           keyTr.innerHTML = `<td>คำอธิบาย</td><td colspan="${additionalKeys.length + 1}"></td>`;
           const valTr = document.createElement('tr');
           valTr.setAttribute('data-desc-val', '1');
-          const existingDesc = (nut.find(x => x && typeof x === 'object' && Object.keys(x).includes('คำอธิบาย')) || {})['คำอธิบาย'] || '';
-          valTr.innerHTML = `<td colspan="${additionalKeys.length + 2}"><input id="nutritional_textarea_edit_input" type="text" placeholder="${existingDesc}" value="" style="width:100%" /></td>`;
+          const input = document.createElement('input');
+          input.id = 'nutritional_textarea_edit_input';
+          input.type = 'text';
+          input.style.width = '100%';
+          const existingDesc = (descEntries[0] && descEntries[0]['คำอธิบาย']) || '';
+          input.placeholder = existingDesc;
+          input.value = existingDesc;
+          const td = document.createElement('td');
+          td.colSpan = additionalKeys.length + 2;
+          td.appendChild(input);
+          valTr.appendChild(td);
           tb.appendChild(keyTr);
           tb.appendChild(valTr);
         }
       });
+      if (descEntries.length) {
+        textCb.checked = true;
+        textCb.dispatchEvent(new Event('change', { bubbles: true }));
+        const textArea = document.getElementById('nutritional_textarea');
+        if (textArea && descEntries[0]) {
+          textArea.value = descEntries[0]['คำอธิบาย'] || '';
+          textArea.style.display = 'block';
+        }
+      }
     }
 
     if (tableCb) {
@@ -334,6 +383,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         editTableContainer.style.display = e.target.checked ? 'block' : 'none';
         if (e.target.checked) renderEditableTable();
       });
+      if (dataEntries.length) {
+        tableCb.checked = true;
+        tableCb.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     }
   } catch (err) {
     console.error('populateEdit error:', err);

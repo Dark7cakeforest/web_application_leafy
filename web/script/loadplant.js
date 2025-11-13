@@ -22,9 +22,15 @@ function bindDatepickReload(reloadFn) {
 
 function renderCards(plants, aiResults) {
   const containerMain = document.getElementById("plants");
-  const statusEl = document.getElementById('status');
+  const dataStatusEl = document.getElementById('status2') || null;
+  const statusEl = dataStatusEl || document.getElementById('status');
+  const searchStatusEl = dataStatusEl ? document.getElementById('status') : null;
+  const noDataText = 'ช่วงวันที่คุณต้องการไม่มีการประมวลผลพืช';
   containerMain.innerHTML = "";
   if (statusEl) statusEl.textContent = "";
+  if (searchStatusEl) searchStatusEl.textContent = "";
+  if (dataStatusEl) dataStatusEl.style.display = 'none';
+  if (searchStatusEl) searchStatusEl.style.display = 'none';
 
   const pathname = window.location.pathname;
   const indexPage      = pathname.includes("index.html");
@@ -35,6 +41,22 @@ function renderCards(plants, aiResults) {
 
   const aiMap = {};
   for (const r of aiResults) aiMap[r.class_id] = r;
+
+  const shouldFilterByStats = indexPage || staticPage || isListPage;
+  const hasValidStats = (plant) => {
+    if (!shouldFilterByStats) return true;
+    if (!plant || plant.class_id === null || plant.class_id === undefined) return false;
+    const stats = aiMap[plant.class_id];
+    if (!stats) return false;
+    const keys = ['correct', 'notcorrect', 'conclusion'];
+    return keys.some((key) => {
+      const value = stats[key];
+      if (value === null || value === undefined) return false;
+      const num = Number(value);
+      if (!Number.isNaN(num)) return num !== 0;
+      return Boolean(value);
+    });
+  };
 
   const createPlantCard = (plant) => {
     const container = document.createElement("div");
@@ -60,19 +82,38 @@ function renderCards(plants, aiResults) {
   // index/static: top 10 stamp+ แสดงสถิติ (อิงช่วงวันที่ที่เลือก)
   if (indexPage || staticPage) {
     const rankable = plants.filter(p => p.class_id !== null && p.class_id !== undefined);
-    rankable.sort((a, b) => {
+    const activePlants = rankable.filter(hasValidStats);
+
+    if (activePlants.length === 0) {
+      if (dataStatusEl) {
+        dataStatusEl.textContent = noDataText;
+        dataStatusEl.style.display = '';
+      } else if (statusEl) {
+        statusEl.textContent = noDataText;
+        statusEl.style.display = '';
+      }
+      return;
+    }
+
+    activePlants.sort((a, b) => {
       const ca = aiMap[a.class_id]?.conclusion ?? 0;
       const cb = aiMap[b.class_id]?.conclusion ?? 0;
       if (cb !== ca) return cb - ca;
       return (a.class_id ?? 0) - (b.class_id ?? 0);
     });
 
-    const topN = rankable.slice(0, 10);
+    const topN = activePlants.slice(0, 10);
 
     // ถ้าทั้งหมดของช่วงนี้ไม่มีการประมวลผลเลย ให้แจ้งสถานะ
     const totalConclusion = aiResults.reduce((s, r) => s + (r.conclusion || 0), 0);
     if (totalConclusion === 0 && statusEl) {
-      statusEl.textContent = 'ไม่มีการประมวลผลในช่วงวันที่ที่คุณเลือก';
+      if (dataStatusEl) {
+        dataStatusEl.textContent = noDataText;
+        dataStatusEl.style.display = '';
+      } else {
+        statusEl.textContent = noDataText;
+        statusEl.style.display = '';
+      }
     }
 
     topN.forEach((plant, idx) => {
@@ -105,12 +146,30 @@ function renderCards(plants, aiResults) {
       card.appendChild(conclusion);
       containerMain.appendChild(card);
     });
+    if (dataStatusEl && dataStatusEl.textContent === '') {
+      dataStatusEl.style.display = 'none';
+    } else if (dataStatusEl && dataStatusEl.textContent) {
+      dataStatusEl.style.display = '';
+    }
     return;
   }
 
   // list.html: แสดงการ์ดเลือกพืช (กดแล้วไปตาราง perPlant)
   if (isListPage) {
-    plants.forEach((plant, i) => {
+    const activePlants = plants.filter(hasValidStats);
+
+    if (activePlants.length === 0) {
+      if (dataStatusEl) {
+        dataStatusEl.textContent = noDataText;
+        dataStatusEl.style.display = '';
+      } else if (statusEl) {
+        statusEl.textContent = noDataText;
+        statusEl.style.display = '';
+      }
+      return;
+    }
+
+    activePlants.forEach((plant, i) => {
       const card = createPlantCard(plant);
       card.id = `plant-${i}`;
       card.addEventListener("click", () => {
@@ -173,6 +232,10 @@ function renderCards(plants, aiResults) {
       card.appendChild(deleteButton);
       containerMain.appendChild(card);
     });
+    if (dataStatusEl) {
+      dataStatusEl.textContent = '';
+      dataStatusEl.style.display = 'none';
+    }
     return;
   }
 
@@ -182,6 +245,10 @@ function renderCards(plants, aiResults) {
     card.id = `plant-${i}`;
     containerMain.appendChild(card);
   });
+  if (dataStatusEl) {
+    dataStatusEl.textContent = '';
+    dataStatusEl.style.display = 'none';
+  }
 }
 
 // ===== main load (ครั้งแรก + เมื่อเปลี่ยนวันที่) =====
@@ -195,6 +262,16 @@ function reloadAll() {
   .then(([plantResp, aiResp]) => {
     const plants = plantResp.plant || [];
     const aiResults = aiResp.ai_result || [];
+    const nameMap = {};
+    plants.forEach(p => {
+      if (p && p.class_id !== null && p.class_id !== undefined && p.name) {
+        nameMap[String(p.class_id)] = p.name;
+      }
+    });
+    window.__plantNameByClassId = nameMap;
+    if (typeof window.refreshListTablesWithNames === 'function') {
+      window.refreshListTablesWithNames();
+    }
     renderCards(plants, aiResults);
   })
   .catch((error) => {

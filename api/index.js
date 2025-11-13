@@ -68,6 +68,6 @@ server.use((req, res) => {
   res.status(404).send('404 Not Found');
 });
 
-server.listen(process.env.PORT || 8000, '0.0.0.0',()=>{//เซิฟเวอร์พอร์ต8000
-    console.log(`Start server at port ${process.env.PORT || 8000}`)
+server.listen(8000, '0.0.0.0',()=>{//เซิฟเวอร์พอร์ต8000
+    console.log(`Start server at port 8000`);
 })

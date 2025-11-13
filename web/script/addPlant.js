@@ -3,14 +3,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!form) return;
 
     // Check if we're on edit.html page - if so, skip UI initialization (populateEdit.js handles it)
-    const isEditPage = window.location.pathname.includes('edit.html');
-    const hasEditId = new URLSearchParams(window.location.search).get('id');
-    
     // ---- nutritional_text / nutritional_table (UI) ----
     const ensureNutritionalUI = () => {
         // show textarea when checkbox nutritional_text is present and checked
         const textCb = document.querySelector('input[name="nutritional_text"]');
-        if (textCb) {
+            if (textCb) {
             let area = document.getElementById('nutritional_textarea');
             if (!area) {
                 area = document.createElement('textarea');
@@ -91,10 +88,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 // Add column handler
+                const syncAddColState = () => {
+                    addColBtn.disabled = additionalKeys.length >= 5;
+                };
+                syncAddColState();
                 addColBtn.addEventListener('click', () => {
                     const colName = prompt('ชื่อคอลัมน์ใหม่:');
                     if (!colName || colName.trim() === '') return;
                     const trimmedName = colName.trim();
+                    if (trimmedName === 'คำอธิบาย') {
+                        alert('ไม่สามารถเพิ่มได้กรุณาใช้ชื่อคอลัมน์อื่น');
+                        return;
+                    }
+                    if (additionalKeys.length >= 5) {
+                        alert('ไม่สามารถเพิ่มคอลัมน์ได้มากกว่า 5 คอลัมน์');
+                        return;
+                    }
                     if (additionalKeys.includes(trimmedName)) {
                         alert('มีคอลัมน์นี้อยู่แล้ว');
                         return;
@@ -116,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         newCell.appendChild(inp);
                         tr.insertBefore(newCell, secondToLast);
                     });
+                    syncAddColState();
                 });
                 
                 // Remove handler (delegate)
@@ -143,12 +153,18 @@ document.addEventListener('DOMContentLoaded', () => {
                                 if (inp) td.remove();
                             });
                         });
+                        syncAddColState();
                     }
                 });
 
                 const checkboxGroup = tableCb.closest('.checkbox-group');
                 if (checkboxGroup && checkboxGroup.parentNode) {
-                    checkboxGroup.parentNode.insertBefore(wrapper, checkboxGroup.nextSibling);
+                    const textArea = document.getElementById('nutritional_textarea');
+                    if (textArea && textArea.parentNode === checkboxGroup.parentNode) {
+                        textArea.parentNode.insertBefore(wrapper, textArea.nextSibling);
+                    } else {
+                        checkboxGroup.parentNode.insertBefore(wrapper, checkboxGroup.nextSibling);
+                    }
                 } else {
                     const formEl = document.querySelector('.add-plant-form');
                     if (formEl) formEl.appendChild(wrapper);
@@ -158,11 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // initialize UI only if not on edit.html (populateEdit.js handles edit page)
-    if (!isEditPage || !hasEditId) {
-        ensureNutritionalUI();
-        document.addEventListener('change', (e)=>{ if (e.target && (e.target.name==='nutritional_text' || e.target.name==='nutritional_table')) ensureNutritionalUI(); });
-    }
+    // initialize UI for nutritional controls on both add and edit pages
+    ensureNutritionalUI();
+    document.addEventListener('change', (e)=>{ if (e.target && (e.target.name==='nutritional_text' || e.target.name==='nutritional_table')) ensureNutritionalUI(); });
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -210,69 +224,77 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // build nutritional_value JSON array from optional UI elements
             const nutritional_value = [];
-            // existing JSON from original plant (if editing) should be preserved first
-            const orig = window.__originalPlant && window.__originalPlant.nutritional_value ? window.__originalPlant.nutritional_value : null;
-            if (Array.isArray(orig)) nutritional_value.push(...orig);
+            const originalNutrition = Array.isArray(window.__originalPlant?.nutritional_value)
+                ? JSON.parse(JSON.stringify(window.__originalPlant.nutritional_value))
+                : [];
 
-            // textual description (from add form or edit form)
-            // textual description: accept either add-form textarea, edit textarea, or the single-line edit input used by populateEdit
-            const descArea = document.getElementById('nutritional_textarea') || document.getElementById('nutritional_textarea_edit') || document.getElementById('nutritional_textarea_edit_input');
-            if (descArea && descArea.value && descArea.value.trim()) {
-                const obj = { "คำอธิบาย": descArea.value.trim() };
-                nutritional_value.push(obj);
+            const textCb = document.querySelector('input[name="nutritional_text"]');
+            const tableCb = document.querySelector('input[name="nutritional_table"]');
+
+            const existingDesc = originalNutrition.find(item =>
+                item && typeof item === 'object' && Object.prototype.hasOwnProperty.call(item, 'คำอธิบาย')
+            );
+            const existingTableEntries = originalNutrition.filter(item =>
+                !(item && typeof item === 'object' && Object.prototype.hasOwnProperty.call(item, 'คำอธิบาย'))
+            );
+
+            const descArea = document.getElementById('nutritional_textarea') ||
+                             document.getElementById('nutritional_textarea_edit') ||
+                             document.getElementById('nutritional_textarea_edit_input');
+
+            if (textCb && textCb.checked) {
+                const val = descArea && descArea.value ? descArea.value.trim() : '';
+                if (val) {
+                    nutritional_value.push({ "คำอธิบาย": val });
+                } else if (existingDesc) {
+                    nutritional_value.push(existingDesc);
+                }
+            } else if (existingDesc) {
+                nutritional_value.push(existingDesc);
             }
 
-            // table entries (from add form or edit form)
             const tableWrapper = document.getElementById('nutritional_table_wrapper') || document.getElementById('nutritional_table_edit_container');
-            if (tableWrapper) {
-                    // prefer a table with class 'nutritional_table_edit' (edit page) or any table inside wrapper
-                    const tbl = tableWrapper.querySelector('table.nutritional_table_edit') || tableWrapper.querySelector('table');
-                    if (tbl) {
-                        const rows = tbl.querySelectorAll('tbody tr');
-                        // Get all columns from header
-                        const headers = tbl.querySelectorAll('thead th');
-                        const columns = [];
-                        headers.forEach((th, idx) => {
-                            const colText = th.textContent.trim().replace('×', '').trim();
-                            if (colText !== 'รายการ' && colText !== 'แอคชัน' && colText !== 'หน่วย') {
-                                columns.push({
-                                    index: idx,
-                                    name: colText,
-                                    className: 'n_col_' + colText
-                                });
-                            }
-                        });
-                        
-                        rows.forEach(r => {
-                            const inputName = r.querySelector('.n_name');
-                            const inputUnit = r.querySelector('.n_unit');
-                            const nameVal = inputName ? (inputName.value || '').trim() : '';
-                            if (!nameVal) return; // skip empty rows
-                            
-                            const obj = {};
-                            obj.name = nameVal;
-                            
-                            // Add dynamic columns
-                            columns.forEach(col => {
-                                const colInput = r.querySelector(`.${col.className}`) || 
-                                                (r.children[col.index] && r.children[col.index].querySelector('input'));
-                                let colVal = colInput ? (colInput.value || '').trim() : '';
-                                // try to convert to number when possible
-                                if (colVal !== '') {
-                                    const n = Number(colVal);
-                                    if (!Number.isNaN(n)) colVal = n;
-                                }
-                                if (colVal !== '') {
-                                    obj[col.name] = colVal;
-                                }
+            if (tableCb && tableCb.checked && tableWrapper) {
+                const tbl = tableWrapper.querySelector('table.nutritional_table_edit') || tableWrapper.querySelector('table');
+                if (tbl) {
+                    const rows = tbl.querySelectorAll('tbody tr');
+                    const headers = tbl.querySelectorAll('thead th');
+                    const columns = [];
+                    headers.forEach((th, idx) => {
+                        const colText = th.textContent.trim().replace('×', '').trim();
+                        if (colText !== 'รายการ' && colText !== 'แอคชัน' && colText !== 'หน่วย') {
+                            columns.push({
+                                index: idx,
+                                name: colText,
+                                className: 'n_col_' + colText
                             });
-                            
-                            const unitVal = inputUnit ? (inputUnit.value || '').trim() : '';
-                            if (unitVal) obj.unit = unitVal;
-                            
-                            nutritional_value.push(obj);
+                        }
+                    });
+
+                    rows.forEach(r => {
+                        const inputName = r.querySelector('.n_name');
+                        const inputUnit = r.querySelector('.n_unit');
+                        const nameVal = inputName ? (inputName.value || '').trim() : '';
+                        if (!nameVal) return;
+
+                        const rowObj = { name: nameVal };
+                        columns.forEach(col => {
+                            const colInput = r.querySelector(`.${col.className}`) ||
+                                (r.children[col.index] && r.children[col.index].querySelector('input'));
+                            let colVal = colInput ? (colInput.value || '').trim() : '';
+                            if (colVal !== '') {
+                                const n = Number(colVal);
+                                if (!Number.isNaN(n)) colVal = n;
+                            }
+                            if (colVal !== '') rowObj[col.name] = colVal;
                         });
-                    }
+                        const unitVal = inputUnit ? (inputUnit.value || '').trim() : '';
+                        if (unitVal) rowObj.unit = unitVal;
+                        nutritional_value.push(rowObj);
+                    });
+                }
+            } else if (existingTableEntries.length) {
+                nutritional_value.push(...existingTableEntries);
             }
 
             const payload = {
@@ -291,8 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.debug('Collected nutritional_value:', nutritional_value);
 
             // if either checkbox is checked, ensure we actually have at least one nutritional item
-            const textCb = document.querySelector('input[name="nutritional_text"]');
-            const tableCb = document.querySelector('input[name="nutritional_table"]');
             if ((textCb && textCb.checked) || (tableCb && tableCb.checked)) {
                 if (!nutritional_value || nutritional_value.length === 0) {
                     alert('คุณได้เลือกที่จะเพิ่มข้อมูลคุณค่าทางโภชนาการ แต่ยังไม่มีรายการ กรุณาเพิ่มอย่างน้อยหนึ่งรายการ');

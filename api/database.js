@@ -1,11 +1,9 @@
-require('dotenv').config();
-const dotenv = require('dotenv');
 const { setupModelRoutes } = require('./model.js');
 const bodyParser = require('body-parser');
 const express = require('express');
 const mysql = require('mysql2/promise');
 const app = express();
-const port = process.env.PORT || 3001;
+const port = 3001;
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
@@ -73,18 +71,14 @@ app.use(cors({
 app.use('/images', express.static(imagesDir));//หน้า images ให้เป็น static folder
 
 const connection = mysql.createPool({//สร้างตัวเชื่อมฐานข้อมูล
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
+    host: "localhost",
+    user: "root",
     password: databasepassword,
-    database: process.env.DB_NAME,
+    database: "app_database",
     dateStrings: true,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    ssl: {
-        ca: fs.readFileSync(path.join(__dirname, process.env.CA)),
-        rejectUnauthorized: true
-    }
 });
 
 console.log("Connected to MySQL Successfully.");
@@ -108,7 +102,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ status: "Failed To Login", message: "Invalid username or password" });
     }
 
-    const token = jwt.sign({ id: user.user_id, is_guest: user.is_guest }, process.env.JWT_SECRET || "your_secret", { expiresIn: "1h" });
+    const token = jwt.sign({ id: user.user_id, is_guest: user.is_guest }, "your_secret", { expiresIn: "1h" });
     return res.json({ status: "ok", message: "Login success", accessToken: token });
   } catch (err) {
     console.error("Error in /api/login:", err);
@@ -378,12 +372,19 @@ app.get('/api/results', async (req, res) => {
       ar.result_id,
       ar.upload_id,
       ar.class_id,
+      COALESCE(v.plant_name, ac.class_label) AS plant_name,
       ac.class_label,
       ar.confidence_score,
       DATE_FORMAT(ar.processed_time, '%Y-%m-%d %H:%i:%s') AS processed_time,
-      ar.is_correct
+      ar.is_correct,
+      v.plant_id
     FROM ai_results ar
     JOIN ai_classes ac ON ac.class_id = ar.class_id
+    LEFT JOIN (
+      SELECT class_id, MIN(plant_id) AS plant_id, MAX(name) AS plant_name
+      FROM vegetables
+      GROUP BY class_id
+    ) v ON v.class_id = ar.class_id
     ${where}
     ORDER BY ar.processed_time DESC, ar.result_id DESC
   `;
@@ -401,27 +402,116 @@ app.get('/api/result_detail', async (req, res) => {
   const { result_id } = req.query;
   if (!result_id) return res.status(400).json({ error: "result_id is required" });
 
+  const numericId = Number(result_id);
+  if (!Number.isInteger(numericId) || numericId <= 0) {
+    return res.status(400).json({ error: "Invalid result_id" });
+  }
+
   const sql = `
     SELECT 
       ar.result_id,
       ar.upload_id,
       ar.class_id,
+      COALESCE(v.plant_name, ac.class_label) AS plant_name,
       ac.class_label,
       ar.confidence_score,
       DATE_FORMAT(ar.processed_time, '%Y-%m-%d %H:%i:%s') AS processed_time,
       ar.is_correct,
       DATE_FORMAT(ar.feedback_time, '%Y-%m-%d %H:%i:%s') AS feedback_time,
-      up.image_path
+      up.image_path,
+      v.plant_id,
+      ar.all_results
     FROM ai_results ar
     JOIN ai_classes ac ON ac.class_id = ar.class_id
+    LEFT JOIN (
+      SELECT class_id, MIN(plant_id) AS plant_id, MAX(name) AS plant_name
+      FROM vegetables
+      GROUP BY class_id
+    ) v ON v.class_id = ar.class_id
     LEFT JOIN upload_photos up ON up.upload_id = ar.upload_id
     WHERE ar.result_id = ? 
     LIMIT 1
   `;
   try {
-    const [rows] = await connection.query(sql, [result_id]);
+    const [rows] = await connection.query(sql, [numericId]);
     if (!rows.length) return res.status(404).json({ error: "Result not found" });
-    res.json({ msg: "Read successfully", result: rows[0] });
+
+    const resultRow = rows[0];
+    let formattedProbabilities = [];
+
+    if (resultRow.all_results) {
+      try {
+        const raw = typeof resultRow.all_results === 'string'
+          ? resultRow.all_results
+          : Buffer.isBuffer(resultRow.all_results)
+            ? resultRow.all_results.toString('utf8')
+            : String(resultRow.all_results);
+
+        const jsonMatch = raw.match(/\[.*\]/s);
+        const jsonSource = jsonMatch ? jsonMatch[0] : raw;
+
+        let parsed;
+        try {
+          parsed = JSON.parse(jsonSource.trim());
+        } catch (jsonErr) {
+          const matches = raw.match(/[+-]?\d*\.?\d+(?:[eE][+-]?\d+)?/g);
+          if (matches && matches.length) {
+            parsed = matches.map(Number);
+          } else {
+            throw jsonErr;
+          }
+        }
+        if (Array.isArray(parsed) && parsed.length) {
+          const probabilityTuples = [];
+          if (typeof parsed[0] === 'number') {
+            parsed.forEach((score, idx) => {
+              probabilityTuples.push({ class_id: idx + 1, score: Number(score) });
+            });
+          } else {
+            parsed.forEach(item => {
+              if (!item) return;
+              const classIdVal = Number(item.class_id ?? (item.index != null ? item.index + 1 : undefined));
+              if (!Number.isNaN(classIdVal)) {
+                probabilityTuples.push({
+                  class_id: classIdVal,
+                  score: Number(item.score ?? item.value ?? 0)
+                });
+              }
+            });
+          }
+
+          if (probabilityTuples.length) {
+            const [classRows] = await connection.query(`
+              SELECT ac.class_id, ac.class_label, v.name AS display_name
+              FROM ai_classes ac
+              LEFT JOIN vegetables v ON v.class_id = ac.class_id
+            `);
+            const classMap = new Map();
+            classRows.forEach(row => {
+              classMap.set(Number(row.class_id), {
+                class_label: row.class_label,
+                display_name: row.display_name || row.class_label
+              });
+            });
+
+            formattedProbabilities = probabilityTuples.map(entry => {
+              const info = classMap.get(entry.class_id) || {};
+              return {
+                class_id: entry.class_id,
+                class_label: info.class_label || `Class ${entry.class_id}`,
+                display_name: info.display_name || info.class_label || `Class ${entry.class_id}`,
+                score: Number.isFinite(entry.score) ? entry.score : 0
+              };
+            }).sort((a, b) => b.score - a.score);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to parse all_results JSON for result', numericId, err);
+      }
+    }
+
+    resultRow.probabilities = formattedProbabilities;
+    res.json({ msg: "Read successfully", result: resultRow });
   } catch (err) {
     console.error('Error /api/result_detail', err);
     return res.status(500).json({ error: "Internal Server Error" });

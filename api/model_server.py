@@ -1,11 +1,13 @@
 # api/model_server.py
 import os
-from flask import Flask, request, jsonify
-import tensorflow as tf
-import numpy as np
-from PIL import Image
-from PIL import ImageFile
+import json
 import warnings
+from datetime import datetime, timezone, timedelta
+
+import numpy as np
+import tensorflow as tf
+from flask import Flask, request, jsonify
+from PIL import Image, ImageFile
 
 # Allow processing very large images (we will downscale them for the model).
 # The default PIL limit for total pixels can raise DecompressionBombWarning or
@@ -25,6 +27,7 @@ CLASS_LABELS = [
     'horapa', 'jinda', 'kaprao', 'kareang', 'kheenhu',
     'manglug', 'nhum', 'saranae', 'shifa', 'yhira'
 ]
+OTHER_RESULTS_PATH = os.path.join(os.path.dirname(__file__), '..', 'src', 'other_results.txt')
 
 # --- โหลดโมเดล ---
 try:
@@ -56,12 +59,64 @@ def predict():
         image = image.resize((IMAGE_SIZE, IMAGE_SIZE))
         image_array = np.array(image, dtype=np.float32)
         image_array = np.expand_dims(image_array, axis=0)
-        image_array = image_array / 255.0  # Normalize to [0, 1]
+        image_array = (image_array / 127.5) - 1.0  # Normalize to [-1, 1] for MobileNetV2
 
         # --- ประมวลผล ---
         interpreter.set_tensor(input_details[0]['index'], image_array)
         interpreter.invoke()
         prediction = interpreter.get_tensor(output_details[0]['index'])[0]
+        raw_scores = [float(score) for score in prediction]
+        timestamp = (datetime.now(timezone.utc) + timedelta(hours=7)).isoformat()
+
+        print(f"AI prediction scores: {raw_scores}, timestamp: {timestamp}")
+
+        try:
+            line_to_write = f"{json.dumps(raw_scores)}, {timestamp}"
+            last_line = None
+            last_scores = None
+            lines = []
+            if os.path.exists(OTHER_RESULTS_PATH):
+                with open(OTHER_RESULTS_PATH, 'r', encoding='utf-8') as results_file:
+                    lines = results_file.readlines()
+                for existing_line in lines:
+                    stripped = existing_line.strip()
+                    if stripped:
+                        last_line = stripped
+                if last_line:
+                    try:
+                        score_segment = last_line.split(']', 1)[0] + ']'
+                        last_scores = json.loads(score_segment)
+                    except (json.JSONDecodeError, IndexError):
+                        last_scores = None
+
+            if (
+                last_scores == raw_scores
+                and last_line
+                and last_line.rstrip().endswith(']')
+            ):
+                # Update the last line to include the timestamp instead of appending a duplicate entry.
+                for idx in range(len(lines) - 1, -1, -1):
+                    if lines[idx].strip():
+                        lines[idx] = line_to_write + '\n'
+                        break
+                else:
+                    lines.append(line_to_write + '\n')
+                with open(OTHER_RESULTS_PATH, 'w', encoding='utf-8') as results_file:
+                    results_file.writelines(lines)
+            elif last_line != line_to_write:
+                with open(OTHER_RESULTS_PATH, 'a', encoding='utf-8') as results_file:
+                    needs_newline = (
+                        os.path.exists(OTHER_RESULTS_PATH)
+                        and os.path.getsize(OTHER_RESULTS_PATH) > 0
+                        and last_line is not None
+                    )
+                    if needs_newline:
+                        results_file.write('\n')
+                    results_file.write(line_to_write)
+            else:
+                print("Skipped writing duplicate AI prediction scores entry.")
+        except Exception as file_err:
+            print(f"Failed to write other_results.txt: {file_err}")
 
         # --- หาผลลัพธ์ ---
         predicted_index = np.argmax(prediction)
@@ -73,7 +128,9 @@ def predict():
             'success': True,
             'predicted_index': int(predicted_index),
             'class_label': class_label,
-            'confidence': confidence
+            'confidence': confidence,
+            'scores': raw_scores,
+            'timestamp': timestamp
         })
 
     except Exception as e:
@@ -81,4 +138,4 @@ def predict():
 
 if __name__ == '__main__':
     print("Python Model Server is starting on http://127.0.0.1:5000")
-    app.run(host='0.0.0.0', port=int(os.environ.get('PYTHON_PORT', 5000)))
+    app.run(host='0.0.0.0', port=5000)

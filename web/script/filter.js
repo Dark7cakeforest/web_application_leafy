@@ -3,6 +3,7 @@
   const input = document.querySelector('.search'); 
   const container = document.getElementById('plants');
   const statusEl = document.getElementById('status');
+  const dataStatusEl = document.getElementById('status2');
 
   if (!input) {
     console.warn('ไม่พบ input.search - ใส่ class="search" ให้ช่องค้นหาใน navbar.html');
@@ -16,6 +17,13 @@
   function doFilter() {
     const q = (input.value || '').trim().toLowerCase();
     const cards = container.querySelectorAll('.content');
+
+    if (dataStatusEl) {
+      dataStatusEl.style.display = q ? 'none' : '';
+    }
+    if (statusEl) {
+      statusEl.style.display = q ? '' : 'none';
+    }
     let shown = 0;
 
     cards.forEach(card => {

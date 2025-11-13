@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Static</title>
+    <title>Summary</title>
     <link rel="stylesheet" href="../src/style.css">
     <link rel="icon" type="image/x-icon" href="../src/favicon.ico">
 </head>
@@ -49,28 +49,33 @@
         <div id="plants" class="separatePlant"><!--กล่องพืชแต่ละรายการ-->
             <!--พืชจาก script-->
         </div>
-        <p id="status"></p><!-- สถานะการค้นหา ไว้แสดงในกรณีที่ไม่มีผลลัพธ์ -->
+        <p id="status"></p><!-- สถานะการค้นหา -->
+        <p id="status2"></p><!-- สถานะการโหลดข้อมูล -->
         <table border="1" class="allOfList" style="display: none;"><!--ตารางแสดงผลพืชที่ถูกประมวลผลทั้งหมด-->
             <thead>
                 <th>ลำดับที่</th>
                 <th>ผลลัพธ์การประมวลผล</th>
+                <th>ผลการให้คะแนน</th>
                 <th>วันที่ประมวลผล</th>
                 <th>จัดการข้อมูล</th>
             </thead>
             <tbody id="queryAllResult">
             </tbody>
         </table>
+        <div id="pagination-queryAllResult" class="pagination" style="display: none;"></div>
         <div class="selectedPlant" style="display: none;"><!--ฟิลเตอร์เฉพาะพืชหนึ่งชนิด-->
             <table border="1" class="selectedPlant"><!--ตารางแสดงผลพืชที่ถูกประมวลผลทั้งหมด-->
             <thead>
                 <th>ลำดับที่</th>
                 <th>ผลลัพธ์การประมวลผล</th>
+                <th>ผลการให้คะแนน</th>
                 <th>วันที่ประมวลผล</th>
                 <th>จัดการข้อมูล</th>
             </thead>
                 <tbody id="plantSelect">
                 </tbody>
             </table>
+            <div id="pagination-plantSelect" class="pagination"></div>
             <button onclick="showPerPlant()">ย้อนกลับ</button>
         </div>
     </div>
