@@ -203,7 +203,9 @@ function loadPerPlantTable(classId, extraContext = {}) {
   fetch(url, { cache: 'no-store' })
     .then(r => r.json())
     .then(data => {
-      showPerPlant();
+      if (typeof window.showSelectedPlantView === 'function') {
+        window.showSelectedPlantView();
+      }
       let list = applyCorrectionPatch(data.ai_result || []);
       list = list.filter(x => String(x.class_id) === String(classId));
       const context = {
@@ -272,10 +274,14 @@ function initList() {
         showAll();
         loadAllTable();
       } else {
-        showPerPlant();
         const last = window.__lastClassIdForPerPlant;
         if (last) {
+          if (typeof window.showSelectedPlantView === 'function') {
+            window.showSelectedPlantView();
+          }
           loadPerPlantTable(last);
+        } else {
+          showPerPlant();
         }
       }
     });

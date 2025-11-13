@@ -21,6 +21,19 @@ function showPerPlant() {
   }
 }
 
+function showSelectedPlantView() {
+  if (!el1 || !el2 || !el3) return;
+  el1.style.display = 'none';
+  el2.style.display = 'none';
+  el3.style.display = 'inline-block';
+  hidePagination(pagAll);
+  const dropdown = document.getElementById('dateperiod');
+  if (dropdown) {
+    dropdown.value = 'perPlant';
+  }
+}
+window.showSelectedPlantView = showSelectedPlantView;
+
 function showAll() {
   if (!el1 || !el2 || !el3) return;
   el1.style.display = 'none';
@@ -34,11 +47,7 @@ function showAll() {
 }
 
 function showOne(classId) {
-  if (!el1 || !el2 || !el3) return;
-  el1.style.display = 'none';
-  el2.style.display = 'none';
-  el3.style.display = 'inline-block';
-  hidePagination(pagAll);
+  showSelectedPlantView();
 
   // บรรทัดนี้เรียกให้ loadlist.js เติมตารางจาก classId ที่เลือก
   if (typeof loadPerPlantTable === 'function') {
